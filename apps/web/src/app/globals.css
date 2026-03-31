@@ -1,1 +1,48 @@
 @import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@300;400;500;600;700&display=swap");
+
+@theme {
+  --color-surface-primary: #FFF8F0;
+  --color-surface-secondary: #FFF0E0;
+  --color-surface-card: #FFFFFF;
+  --color-foreground-primary: #2D2926;
+  --color-foreground-secondary: #5E5954;
+  --color-foreground-muted: #8C8782;
+  --color-border-subtle: #F0E8DA;
+  --color-accent-blue: #3B82C4;
+  --color-accent-blue-light: #E8F2FC;
+  --color-accent-gold: #F5A623;
+  --color-accent-gold-light: #FFF3D6;
+  --color-accent-coral: #FF7E6B;
+  --color-accent-green: #4CAF6E;
+  --color-accent-purple: #9B7ED8;
+
+  --font-family-heading: "Anton", sans-serif;
+  --font-family-body: "Inter", sans-serif;
+
+  --radius-card: 12px;
+  --radius-button: 8px;
+  --radius-pill: 9999px;
+}
+
+body {
+  font-family: var(--font-family-body);
+  background-color: var(--color-surface-primary);
+  color: var(--color-foreground-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family-heading);
+  font-weight: 400;
+}
+
+/* Scrollbar hiding for carousels */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

@@ -1,0 +1,648 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ──────────────────────────────────────────────────────────────────
+
+enum AgeBand {
+  BABY      // 0-2
+  TODDLER   // 2-4
+  PRESCHOOL // 4-6
+  EARLY_READER // 6-9
+}
+
+enum ContentType {
+  VIDEO
+  AUDIO
+  INTERACTIVE
+  READ_ALONG
+}
+
+enum ContentStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REVISION_REQUESTED
+}
+
+enum ChurchStatus {
+  PENDING
+  APPROVED
+  SUSPENDED
+  REJECTED
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  CONTENT_ADMIN
+  REVIEWER
+  CHURCH_ADMIN
+}
+
+enum TranscodingStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// ─── Auth & Accounts ────────────────────────────────────────────────────────
+
+model Account {
+  id             String    @id @default(uuid()) @db.Uuid
+  email          String    @unique
+  keycloakId     String?   @unique @map("keycloak_id")
+  displayName    String    @map("display_name")
+  emailVerified  Boolean   @default(false) @map("email_verified")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  sessions       Session[]
+  consentRecords ConsentRecord[]
+  pin            PIN?
+  childProfiles  ChildProfile[]
+
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(uuid()) @db.Uuid
+  accountId    String   @map("account_id") @db.Uuid
+  refreshToken String   @unique @map("refresh_token")
+  userAgent    String?  @map("user_agent")
+  ipAddress    String?  @map("ip_address")
+  expiresAt    DateTime @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@map("sessions")
+}
+
+model ConsentRecord {
+  id          String   @id @default(uuid()) @db.Uuid
+  accountId   String   @map("account_id") @db.Uuid
+  consentType String   @map("consent_type") // e.g. "coppa", "terms", "privacy"
+  version     String
+  grantedAt   DateTime @default(now()) @map("granted_at")
+  ipAddress   String?  @map("ip_address")
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@map("consent_records")
+}
+
+model PIN {
+  id        String   @id @default(uuid()) @db.Uuid
+  accountId String   @unique @map("account_id") @db.Uuid
+  hash      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@map("pins")
+}
+
+// ─── Child Profiles ─────────────────────────────────────────────────────────
+
+model ChildProfile {
+  id          String   @id @default(uuid()) @db.Uuid
+  accountId   String   @map("account_id") @db.Uuid
+  name        String
+  birthDate   DateTime @map("birth_date") @db.Date
+  ageBand     AgeBand  @map("age_band")
+  avatarId    String?  @map("avatar_id") @db.Uuid
+  isActive    Boolean  @default(false) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  account          Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  avatar           Avatar?            @relation(fields: [avatarId], references: [id])
+  playbackSessions PlaybackSession[]
+  watchProgress    WatchProgress[]
+  screenTimeRules  ScreenTimeRule[]
+  screenTimeSessions ScreenTimeSession[]
+  blockedContent   BlockedContent[]
+  viewHistory      ViewHistoryEntry[]
+  badges           ChildBadge[]
+  progress         ChildProgress[]
+  verseCompletions MemoryVerseCompletion[]
+  playlists        Playlist[]
+
+  @@index([accountId])
+  @@map("child_profiles")
+}
+
+model Avatar {
+  id       String @id @default(uuid()) @db.Uuid
+  name     String
+  icon     String
+  color    String
+
+  childProfiles ChildProfile[]
+
+  @@map("avatars")
+}
+
+// ─── Content ────────────────────────────────────────────────────────────────
+
+model Content {
+  id              String        @id @default(uuid()) @db.Uuid
+  title           String
+  description     String?       @db.Text
+  contentType     ContentType   @map("content_type")
+  status          ContentStatus @default(DRAFT)
+  durationSeconds Int?          @map("duration_seconds")
+  thumbnailUrl    String?       @map("thumbnail_url")
+  isFeatured      Boolean       @default(false) @map("is_featured")
+  publishedAt     DateTime?     @map("published_at")
+  createdById     String?       @map("created_by_id") @db.Uuid
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  ageBands          ContentAgeBand[]
+  categories        ContentCategory[]
+  tags              ContentTag[]
+  scriptureRefs     ScriptureReference[]
+  series            SeriesItem[]
+  playlistItems     PlaylistItem[]
+  reviewRequests    ReviewRequest[]
+  playbackSessions  PlaybackSession[]
+  watchProgress     WatchProgress[]
+  blockedContent    BlockedContent[]
+  viewHistory       ViewHistoryEntry[]
+  mediaAssets       MediaAsset[]
+  analyticsEvents   AnalyticsEvent[]
+
+  @@index([status])
+  @@index([contentType])
+  @@index([isFeatured])
+  @@map("content")
+}
+
+model ContentAgeBand {
+  contentId String  @map("content_id") @db.Uuid
+  ageBand   AgeBand @map("age_band")
+
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@id([contentId, ageBand])
+  @@map("content_age_bands")
+}
+
+model Category {
+  id          String @id @default(uuid()) @db.Uuid
+  name        String @unique
+  slug        String @unique
+  description String?
+  iconName    String? @map("icon_name")
+  sortOrder   Int     @default(0) @map("sort_order")
+
+  contents ContentCategory[]
+
+  @@map("categories")
+}
+
+model ContentCategory {
+  contentId  String @map("content_id") @db.Uuid
+  categoryId String @map("category_id") @db.Uuid
+
+  content  Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([contentId, categoryId])
+  @@map("content_categories")
+}
+
+model Tag {
+  id   String @id @default(uuid()) @db.Uuid
+  name String @unique
+
+  contents ContentTag[]
+
+  @@map("tags")
+}
+
+model ContentTag {
+  contentId String @map("content_id") @db.Uuid
+  tagId     String @map("tag_id") @db.Uuid
+
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  tag     Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([contentId, tagId])
+  @@map("content_tags")
+}
+
+model ScriptureReference {
+  id        String @id @default(uuid()) @db.Uuid
+  contentId String @map("content_id") @db.Uuid
+  book      String
+  chapter   Int
+  verseFrom Int    @map("verse_from")
+  verseTo   Int?   @map("verse_to")
+
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@index([contentId])
+  @@map("scripture_references")
+}
+
+model Series {
+  id          String @id @default(uuid()) @db.Uuid
+  title       String
+  description String? @db.Text
+  coverUrl    String? @map("cover_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  items SeriesItem[]
+
+  @@map("series")
+}
+
+model SeriesItem {
+  seriesId  String @map("series_id") @db.Uuid
+  contentId String @map("content_id") @db.Uuid
+  sortOrder Int    @map("sort_order")
+
+  series  Series  @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@id([seriesId, contentId])
+  @@map("series_items")
+}
+
+// ─── Playlists ──────────────────────────────────────────────────────────────
+
+model Playlist {
+  id             String   @id @default(uuid()) @db.Uuid
+  childProfileId String?  @map("child_profile_id") @db.Uuid
+  title          String
+  description    String?
+  isSystem       Boolean  @default(false) @map("is_system")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  childProfile ChildProfile? @relation(fields: [childProfileId], references: [id], onDelete: Cascade)
+  items        PlaylistItem[]
+
+  @@index([childProfileId])
+  @@map("playlists")
+}
+
+model PlaylistItem {
+  id         String @id @default(uuid()) @db.Uuid
+  playlistId String @map("playlist_id") @db.Uuid
+  contentId  String @map("content_id") @db.Uuid
+  sortOrder  Int    @map("sort_order")
+
+  playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  content  Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@index([playlistId])
+  @@map("playlist_items")
+}
+
+// ─── Content Review ─────────────────────────────────────────────────────────
+
+model ReviewRequest {
+  id          String       @id @default(uuid()) @db.Uuid
+  contentId   String       @map("content_id") @db.Uuid
+  submittedBy String       @map("submitted_by") @db.Uuid
+  status      ReviewStatus @default(PENDING)
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  content   Content         @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  decisions ReviewDecision[]
+  comments  ReviewComment[]
+
+  @@index([contentId])
+  @@index([status])
+  @@map("review_requests")
+}
+
+model ReviewDecision {
+  id              String       @id @default(uuid()) @db.Uuid
+  reviewRequestId String       @map("review_request_id") @db.Uuid
+  reviewerId      String       @map("reviewer_id") @db.Uuid
+  decision        ReviewStatus
+  notes           String?      @db.Text
+  theologicalCheck Boolean     @default(false) @map("theological_check")
+  ageAppropriateness Boolean   @default(false) @map("age_appropriateness")
+  contentQuality   Boolean     @default(false) @map("content_quality")
+  createdAt       DateTime     @default(now()) @map("created_at")
+
+  reviewRequest ReviewRequest @relation(fields: [reviewRequestId], references: [id], onDelete: Cascade)
+
+  @@index([reviewRequestId])
+  @@map("review_decisions")
+}
+
+model ReviewComment {
+  id              String   @id @default(uuid()) @db.Uuid
+  reviewRequestId String   @map("review_request_id") @db.Uuid
+  authorId        String   @map("author_id") @db.Uuid
+  body            String   @db.Text
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  reviewRequest ReviewRequest @relation(fields: [reviewRequestId], references: [id], onDelete: Cascade)
+
+  @@index([reviewRequestId])
+  @@map("review_comments")
+}
+
+// ─── Playback & Progress ────────────────────────────────────────────────────
+
+model PlaybackSession {
+  id             String   @id @default(uuid()) @db.Uuid
+  childProfileId String   @map("child_profile_id") @db.Uuid
+  contentId      String   @map("content_id") @db.Uuid
+  startedAt      DateTime @default(now()) @map("started_at")
+  endedAt        DateTime? @map("ended_at")
+  durationSeconds Int     @default(0) @map("duration_seconds")
+
+  childProfile ChildProfile @relation(fields: [childProfileId], references: [id], onDelete: Cascade)
+  content      Content      @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@index([childProfileId])
+  @@index([contentId])
+  @@map("playback_sessions")
+}
+
+model WatchProgress {
+  id             String @id @default(uuid()) @db.Uuid
+  childProfileId String @map("child_profile_id") @db.Uuid
+  contentId      String @map("content_id") @db.Uuid
+  progressSeconds Int   @map("progress_seconds")
+  completed      Boolean @default(false)
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  childProfile ChildProfile @relation(fields: [childProfileId], references: [id], onDelete: Cascade)
+  content      Content      @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@unique([childProfileId, contentId])
+  @@map("watch_progress")
+}
+
+// ─── Screen Time & Parental Controls ────────────────────────────────────────
+
+model ScreenTimeRule {
+  id              String @id @default(uuid()) @db.Uuid
+  childProfileId  String @map("child_profile_id") @db.Uuid
+  dayOfWeek       Int    @map("day_of_week") // 0=Sunday..6=Saturday
+  dailyLimitMinutes Int  @map("daily_limit_minutes")
+  startTime       String? @map("start_time") // HH:mm
+  endTime         String? @map("end_time")   // HH:mm
+
+  childProfile ChildProfile @relation(fields: [childProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([childProfileId, dayOfWeek])
+  @@map("screen_time_rules")
+}
+
+model ScreenTimeSession {
+  id              String    @id @default(uuid()) @db.Uuid
+  childProfileId  String    @map("child_profile_id") @db.Uuid
+  startedAt       DateTime  @default(now()) @map("started_at")
+  endedAt         DateTime? @map("ended_at")
+  durationMinutes Int       @default(0) @map("duration_minutes")
+
+  childProfile ChildProfile @relation(fields: [childProfileId], references: [id], onDelete: Cascade)
+
+  @@index([childProfileId])
+  @@map("screen_time_sessions")
+}
+
+model BlockedContent {
+  id              String @id @default(uuid()) @db.Uuid
+  childProfileId  String @map("child_profile_id") @db.Uuid
+  contentId       String @map("content_id") @db.Uuid
+  reason          String?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  childProfile ChildProfile @relation(fields: [childProfileId], references: [id], onDelete: Cascade)
+  content      Content      @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@unique([childProfileId, contentId])
+  @@map("blocked_content")
+}
+
+model ViewHistoryEntry {
+  id              String   @id @default(uuid()) @db.Uuid
+  childProfileId  String   @map("child_profile_id") @db.Uuid
+  contentId       String   @map("content_id") @db.Uuid
+  watchedAt       DateTime @default(now()) @map("watched_at")
+  durationSeconds Int      @default(0) @map("duration_seconds")
+
+  childProfile ChildProfile @relation(fields: [childProfileId], references: [id], onDelete: Cascade)
+  content      Content      @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@index([childProfileId])
+  @@index([watchedAt])
+  @@map("view_history_entries")
+}
+
+// ─── Gamification & Engagement ──────────────────────────────────────────────
+
+model Badge {
+  id          String @id @default(uuid()) @db.Uuid
+  name        String @unique
+  description String
+  iconUrl     String? @map("icon_url")
+  criteria    String  // Human-readable criteria
+
+  rules    BadgeRule[]
+  children ChildBadge[]
+
+  @@map("badges")
+}
+
+model BadgeRule {
+  id        String @id @default(uuid()) @db.Uuid
+  badgeId   String @map("badge_id") @db.Uuid
+  metric    String // e.g. "stories_watched", "songs_listened", "streak_days"
+  threshold Int    // number required to earn badge
+
+  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@index([badgeId])
+  @@map("badge_rules")
+}
+
+model ChildBadge {
+  id             String   @id @default(uuid()) @db.Uuid
+  childProfileId String   @map("child_profile_id") @db.Uuid
+  badgeId        String   @map("badge_id") @db.Uuid
+  earnedAt       DateTime @default(now()) @map("earned_at")
+
+  childProfile ChildProfile @relation(fields: [childProfileId], references: [id], onDelete: Cascade)
+  badge        Badge        @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([childProfileId, badgeId])
+  @@map("child_badges")
+}
+
+model ChildProgress {
+  id              String @id @default(uuid()) @db.Uuid
+  childProfileId  String @map("child_profile_id") @db.Uuid
+  metric          String // e.g. "stories_watched", "streak_days"
+  value           Int    @default(0)
+  lastUpdated     DateTime @default(now()) @map("last_updated")
+
+  childProfile ChildProfile @relation(fields: [childProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([childProfileId, metric])
+  @@map("child_progress")
+}
+
+model MemoryVerse {
+  id        String   @id @default(uuid()) @db.Uuid
+  reference String   // e.g. "John 3:16"
+  text      String   @db.Text
+  ageBand   AgeBand  @map("age_band")
+  dayOfYear Int      @map("day_of_year") // 1-366, for "verse of the day"
+  createdAt DateTime @default(now()) @map("created_at")
+
+  completions MemoryVerseCompletion[]
+
+  @@unique([ageBand, dayOfYear])
+  @@map("memory_verses")
+}
+
+model MemoryVerseCompletion {
+  id              String   @id @default(uuid()) @db.Uuid
+  childProfileId  String   @map("child_profile_id") @db.Uuid
+  memoryVerseId   String   @map("memory_verse_id") @db.Uuid
+  completedAt     DateTime @default(now()) @map("completed_at")
+
+  childProfile ChildProfile @relation(fields: [childProfileId], references: [id], onDelete: Cascade)
+  memoryVerse  MemoryVerse  @relation(fields: [memoryVerseId], references: [id], onDelete: Cascade)
+
+  @@unique([childProfileId, memoryVerseId])
+  @@map("memory_verse_completions")
+}
+
+// ─── Church & Admin ─────────────────────────────────────────────────────────
+
+model ChurchAccount {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String
+  website     String?
+  contactEmail String     @map("contact_email")
+  status      ChurchStatus @default(PENDING)
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  admins AdminUser[]
+
+  @@map("church_accounts")
+}
+
+model AdminUser {
+  id             String    @id @default(uuid()) @db.Uuid
+  email          String    @unique
+  displayName    String    @map("display_name")
+  role           AdminRole
+  churchAccountId String?  @map("church_account_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  churchAccount ChurchAccount? @relation(fields: [churchAccountId], references: [id], onDelete: SetNull)
+
+  @@map("admin_users")
+}
+
+// ─── Media Assets ───────────────────────────────────────────────────────────
+
+model MediaAsset {
+  id          String   @id @default(uuid()) @db.Uuid
+  contentId   String   @map("content_id") @db.Uuid
+  originalKey String   @map("original_key") // S3/MinIO key
+  mimeType    String   @map("mime_type")
+  sizeBytes   BigInt   @map("size_bytes")
+  uploadedAt  DateTime @default(now()) @map("uploaded_at")
+
+  content    Content         @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  variants   MediaVariant[]
+  transcodingJobs TranscodingJob[]
+
+  @@index([contentId])
+  @@map("media_assets")
+}
+
+model MediaVariant {
+  id           String @id @default(uuid()) @db.Uuid
+  mediaAssetId String @map("media_asset_id") @db.Uuid
+  variantKey   String @map("variant_key") // S3/MinIO key
+  format       String // e.g. "mp4", "webm", "hls"
+  resolution   String? // e.g. "720p", "1080p"
+  bitrateKbps  Int?    @map("bitrate_kbps")
+  sizeBytes    BigInt  @map("size_bytes")
+
+  mediaAsset MediaAsset @relation(fields: [mediaAssetId], references: [id], onDelete: Cascade)
+
+  @@index([mediaAssetId])
+  @@map("media_variants")
+}
+
+model TranscodingJob {
+  id           String            @id @default(uuid()) @db.Uuid
+  mediaAssetId String            @map("media_asset_id") @db.Uuid
+  status       TranscodingStatus @default(PENDING)
+  targetFormat String            @map("target_format")
+  progress     Int               @default(0) // 0-100
+  errorMessage String?           @map("error_message")
+  startedAt    DateTime?         @map("started_at")
+  completedAt  DateTime?         @map("completed_at")
+  createdAt    DateTime          @default(now()) @map("created_at")
+
+  mediaAsset MediaAsset @relation(fields: [mediaAssetId], references: [id], onDelete: Cascade)
+
+  @@index([mediaAssetId])
+  @@index([status])
+  @@map("transcoding_jobs")
+}
+
+// ─── Analytics & System ─────────────────────────────────────────────────────
+
+model AnalyticsEvent {
+  id         String   @id @default(uuid()) @db.Uuid
+  eventType  String   @map("event_type") // e.g. "play", "complete", "share"
+  contentId  String?  @map("content_id") @db.Uuid
+  accountId  String?  @map("account_id") @db.Uuid
+  profileId  String?  @map("profile_id") @db.Uuid
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  content Content? @relation(fields: [contentId], references: [id], onDelete: SetNull)
+
+  @@index([eventType])
+  @@index([contentId])
+  @@index([createdAt])
+  @@map("analytics_events")
+}
+
+model SystemConfig {
+  id    String @id @default(uuid()) @db.Uuid
+  key   String @unique
+  value String @db.Text
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_config")
+}
