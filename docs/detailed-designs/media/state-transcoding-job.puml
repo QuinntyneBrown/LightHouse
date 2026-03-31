@@ -1,0 +1,36 @@
+@startuml state-transcoding-job
+title Transcoding Job — State Diagram
+
+[*] --> Queued : Job created
+
+Queued --> Processing : Worker picks up job
+
+Processing --> Completed : All variants generated
+Processing --> Failed : ffmpeg error / timeout
+
+Failed --> Retrying : retryCount < maxRetries
+Retrying --> Processing : Worker retries job
+
+Failed --> [*] : maxRetries exceeded\n(permanent failure)
+Completed --> [*] : Variants registered
+
+state Processing {
+  [*] --> Transcoding360p
+  Transcoding360p --> Transcoding480p : 360p done
+  Transcoding480p --> Transcoding720p : 480p done
+  Transcoding720p --> GeneratingThumbnail : 720p done
+  GeneratingThumbnail --> [*] : thumbnail saved
+}
+
+note right of Processing
+  progress % updated
+  after each quality
+  variant completes
+end note
+
+note right of Failed
+  Error details stored
+  in TranscodingJob.error
+end note
+
+@enduml

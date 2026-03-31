@@ -1,0 +1,58 @@
+@startuml class-parental-domain
+title Parental Controls Domain Model
+
+class ScreenTimeRule {
+    +id: string
+    +profileId: string
+    +dailyLimitMinutes: number
+    +isEnabled: boolean
+    +updatedAt: DateTime
+    --
+    +isUnlimited(): boolean
+}
+
+class ScreenTimeSession {
+    +id: string
+    +profileId: string
+    +date: Date
+    +elapsedMinutes: number
+    +isActive: boolean
+    --
+    +remainingMinutes(rule): number
+    +isWarningThreshold(): boolean
+}
+
+class BlockedContent {
+    +id: string
+    +profileId: string
+    +contentId: string
+    +blockedAt: DateTime
+}
+
+class ViewHistoryEntry {
+    +id: string
+    +profileId: string
+    +contentId: string
+    +contentTitle: string
+    +watchedAt: DateTime
+    +durationMinutes: number
+}
+
+class WeeklySummary {
+    +profileId: string
+    +weekStart: Date
+    +totalMinutes: number
+    +contentCount: number
+    +topCategories: string[]
+}
+
+ScreenTimeRule "1" --> "*" ScreenTimeSession : enforces
+ViewHistoryEntry "*" --> "1" WeeklySummary : aggregates into
+
+note right of ScreenTimeRule
+  dailyLimitMinutes = 0
+  means unlimited when
+  isEnabled = false
+end note
+
+@enduml

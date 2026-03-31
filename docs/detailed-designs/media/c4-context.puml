@@ -1,0 +1,22 @@
+@startuml c4-context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title Media Subsystem — System Context
+
+Person(admin, "Admin / Uploader", "Uploads and manages media content")
+Person(child, "Child Viewer", "Streams or downloads media for offline use")
+
+System(api, "LightHouse API", "Fastify backend handling media operations")
+System_Ext(minio, "MinIO Object Storage", "S3-compatible, self-hostable media storage")
+System_Ext(cdn, "CDN Edge Nodes", "Production content delivery network")
+System_Ext(worker, "Transcoding Worker", "ffmpeg-based HLS transcoding pipeline")
+
+Rel(admin, api, "Uploads media via presigned URLs")
+Rel(child, api, "Requests streams / download manifests")
+Rel(api, minio, "Stores originals, transcoded, thumbnails")
+Rel(api, worker, "Queues transcoding jobs")
+Rel(worker, minio, "Writes HLS segments and variants")
+Rel(child, cdn, "Streams HLS content (production)")
+Rel(cdn, minio, "Origin pull for cached content")
+
+@enduml

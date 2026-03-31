@@ -1,0 +1,47 @@
+@startuml seq-index-sync
+title Index Sync Pipeline
+
+actor "Admin" as admin
+participant "Content CMS" as cms
+participant "Fastify API" as api
+participant "IndexSyncService" as sync
+database "PostgreSQL" as db
+participant "Meilisearch" as meili
+
+== Content Publish ==
+
+admin -> cms : Publishes new content
+cms -> api : POST /api/content\n(creates content record)
+api -> db : INSERT Content
+db --> api : contentId
+
+api -> sync : onContentPublished(contentId)
+sync -> db : SELECT Content\nWHERE id = contentId
+db --> sync : content record
+
+sync -> sync : Map to IndexDocument:\n{ id, title, description,\ncategories, ageBands,\nscriptureRefs, type, duration }
+
+sync -> meili : POST /indexes/content/documents\n[indexDocument]
+meili --> sync : { taskUid, status: "enqueued" }
+sync --> api : indexed
+
+== Content Update ==
+
+admin -> cms : Updates content metadata
+cms -> api : PUT /api/content/{id}
+api -> db : UPDATE Content
+api -> sync : onContentUpdated(contentId)
+sync -> db : Fetch updated content
+sync -> meili : PUT /indexes/content/documents\n[updatedDocument]
+meili --> sync : { taskUid, status: "enqueued" }
+
+== Content Unpublish ==
+
+admin -> cms : Unpublishes content
+cms -> api : DELETE /api/content/{id}
+api -> db : Soft-delete Content
+api -> sync : onContentDeleted(contentId)
+sync -> meili : DELETE /indexes/content/documents\n{ filter: "id = contentId" }
+meili --> sync : { taskUid, status: "enqueued" }
+
+@enduml

@@ -1,0 +1,30 @@
+@startuml seq-oauth-login
+title OAuth Login (Google / Apple)
+
+actor Parent as P
+participant "Next.js PWA" as PWA
+participant "Fastify API\nAuthController" as API
+participant "AuthService" as Auth
+participant "Keycloak" as KC
+participant "Google / Apple" as OAuth
+database "PostgreSQL" as DB
+
+P -> PWA : Tap "Sign in with Google"
+PWA -> API : GET /auth/oauth/google
+API --> PWA : 302 Redirect to\nKeycloak auth endpoint
+PWA --> P : Redirect to Google
+P -> OAuth : Authenticate & consent
+OAuth --> PWA : Redirect with auth code
+PWA -> API : GET /auth/oauth/callback\n?code=...&state=...
+API -> API : Validate state parameter
+API -> Auth : federateOAuthUser(GOOGLE, code)
+Auth -> KC : Exchange code for tokens\nvia Keycloak broker
+KC -> OAuth : Token exchange
+OAuth --> KC : id_token, access_token
+KC --> Auth : Keycloak tokens + user info
+Auth -> DB : UPSERT Account\n(link or create)
+Auth --> API : account + tokens
+API --> PWA : 200 { accessToken,\nset refreshToken cookie }
+PWA --> P : Logged in
+
+@enduml

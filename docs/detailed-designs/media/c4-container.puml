@@ -1,0 +1,33 @@
+@startuml c4-container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Media Subsystem — Container Diagram
+
+Person(admin, "Admin", "Uploads media content")
+Person(child, "Child", "Streams / downloads media")
+
+System_Boundary(lighthouse, "LightHouse Platform") {
+  Container(api, "Media Module", "Fastify + TypeScript", "Upload URLs, transcode status, variant resolution")
+  ContainerDb(pg, "PostgreSQL", "Prisma ORM", "MediaAsset, MediaVariant, TranscodingJob")
+  Container(worker, "Transcoding Worker", "Node.js + ffmpeg", "HLS segmentation, quality variants, thumbnails")
+}
+
+System_Boundary(storage, "MinIO Object Storage") {
+  ContainerDb(originals, "originals bucket", "S3-compatible", "Raw uploaded files")
+  ContainerDb(transcoded, "transcoded bucket", "S3-compatible", "HLS manifests and segments")
+  ContainerDb(thumbs, "thumbnails bucket", "S3-compatible", "Generated thumbnails")
+}
+
+System_Ext(cdn, "CDN", "Edge caching for production delivery")
+
+Rel(admin, api, "getPresignedUrl, confirmUpload")
+Rel(admin, originals, "Direct upload via presigned URL")
+Rel(api, pg, "CRUD media records")
+Rel(api, worker, "Queue transcoding jobs")
+Rel(worker, originals, "Read originals")
+Rel(worker, transcoded, "Write HLS segments")
+Rel(worker, thumbs, "Write thumbnails")
+Rel(child, cdn, "Stream HLS (prod)")
+Rel(cdn, transcoded, "Origin pull")
+
+@enduml

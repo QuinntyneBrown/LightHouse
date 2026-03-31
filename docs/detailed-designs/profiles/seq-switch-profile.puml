@@ -1,0 +1,25 @@
+@startuml seq-switch-profile
+title Switch Active Profile
+
+actor Parent as P
+participant "Next.js PWA" as PWA
+participant "ProfileController" as Ctrl
+participant "ProfileService" as Svc
+database "PostgreSQL" as DB
+
+P -> PWA : Tap child avatar\non profile picker
+PWA -> Ctrl : POST /profiles/:id/activate
+
+Ctrl -> Svc : activateProfile(parentId, profileId)
+Svc -> DB : UPDATE ChildProfile\nSET isActive = false\nWHERE parentId = ?
+Svc -> DB : UPDATE ChildProfile\nSET isActive = true\nWHERE id = profileId
+
+Svc -> DB : SELECT ageBand\nFROM ChildProfile\nWHERE id = profileId
+Svc --> Ctrl : { profile, ageBand }
+
+Ctrl --> PWA : 200 { activeProfile }
+PWA -> PWA : Update session context\n(store ageBand)
+PWA -> PWA : Reload home content\nfiltered by ageBand
+PWA --> P : Show age-appropriate\ncontent for child
+
+@enduml

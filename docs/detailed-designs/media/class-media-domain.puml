@@ -1,0 +1,52 @@
+@startuml class-media-domain
+title Media Domain — Class Diagram
+
+enum TranscodingStatus {
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+  RETRYING
+}
+
+enum StorageBucket {
+  originals
+  transcoded
+  thumbnails
+}
+
+class MediaAsset {
+  +id: string
+  +contentId: string
+  +originalUrl: string
+  +bucketPath: string
+  +mimeType: string
+  +sizeBytes: number
+  +uploadedAt: DateTime
+}
+
+class MediaVariant {
+  +id: string
+  +assetId: string
+  +quality: "360p" | "480p" | "720p"
+  +hlsManifestUrl: string
+  +segmentPrefix: string
+  +sizeBytes: number
+}
+
+class TranscodingJob {
+  +id: string
+  +assetId: string
+  +status: TranscodingStatus
+  +progress: number
+  +startedAt: DateTime
+  +completedAt: DateTime
+  +error: string | null
+}
+
+MediaAsset "1" --> "*" MediaVariant : has variants
+MediaAsset "1" --> "*" TranscodingJob : transcoded by
+MediaAsset --> StorageBucket : stored in
+TranscodingJob --> TranscodingStatus : current status
+
+@enduml

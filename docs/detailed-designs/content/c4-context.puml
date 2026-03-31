@@ -1,0 +1,21 @@
+@startuml c4-context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title System Context -- Content Management
+
+Person(admin, "Admin / Content Creator", "Uploads and manages\nmedia content")
+Person(child, "Child User", "Consumes published\ncontent via PWA")
+
+System(lighthouse, "LightHouse Platform", "Christian media platform\nfor children ages 0-9")
+
+System_Ext(minio, "MinIO", "S3-compatible\nobject storage for media")
+System_Ext(meili, "Meilisearch", "Full-text search engine\nfor content discovery")
+System_Ext(cdn, "CDN", "Content delivery network\nfor media streaming")
+
+Rel(admin, lighthouse, "Uploads content,\nmanages metadata")
+Rel(child, lighthouse, "Browses and\nstreams content")
+Rel(lighthouse, minio, "Store / retrieve\nmedia files")
+Rel(lighthouse, meili, "Index / search\ncontent metadata")
+Rel(lighthouse, cdn, "Serve media\nto clients")
+
+@enduml

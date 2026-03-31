@@ -1,0 +1,30 @@
+@startuml seq-token-refresh
+title Token Refresh Flow
+
+participant "Next.js PWA" as PWA
+participant "Fastify API\nAuthController" as API
+participant "TokenService" as TS
+database "PostgreSQL" as DB
+
+PWA -> API : API call with\nexpired access token
+API --> PWA : 401 Unauthorized\n(token expired)
+
+PWA -> API : POST /auth/refresh\n(refreshToken in httpOnly cookie)
+API -> TS : refreshAccessToken(refreshToken)
+TS -> DB : SELECT Session\nWHERE hashedToken = hash(refreshToken)
+
+alt Valid refresh token
+    TS -> TS : Verify not expired
+    TS -> TS : Generate new access token (15 min)
+    TS -> TS : Rotate refresh token
+    TS -> DB : UPDATE Session\n(new hashed refresh token,\nnew expiresAt)
+    TS --> API : { accessToken, refreshToken }
+    API --> PWA : 200 { accessToken }\n+ Set-Cookie refreshToken
+    PWA -> API : Retry original request\nwith new access token
+else Expired or revoked
+    TS --> API : InvalidTokenError
+    API --> PWA : 401 { error: "session_expired" }
+    PWA -> PWA : Redirect to login
+end
+
+@enduml

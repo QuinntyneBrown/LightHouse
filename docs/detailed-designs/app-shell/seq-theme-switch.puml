@@ -1,0 +1,31 @@
+@startuml seq-theme-switch
+title Theme Switch on Profile Change
+
+actor Parent
+participant "ProfileSwitcher" as Switcher
+participant "ThemeProvider" as Theme
+participant "AppShell" as Shell
+participant "CSS Variables" as CSS
+
+Parent -> Switcher: Opens profile switcher\n(taps avatar in nav)
+Switcher -> Switcher: Display all child profiles\nwith avatars and names
+
+Parent -> Switcher: Selects different child profile
+
+Switcher -> Switcher: Update activeProfile\nin NavigationState
+
+Switcher -> Theme: setProfile(selectedProfile)
+Theme -> Theme: Resolve AgeBand from\nprofile.dateOfBirth
+
+alt Seedlings (age 0-3)
+  Theme -> CSS: --primary: #F8C8DC\n--secondary: #B5EAD7\n--accent: #FFDAC1\n--font-heading: 24px rounded
+else Sprouts (age 4-6)
+  Theme -> CSS: --primary: #FF6B6B\n--secondary: #4ECDC4\n--accent: #FFE66D\n--font-heading: 22px bold
+else Explorers (age 7-9)
+  Theme -> CSS: --primary: #2D5016\n--secondary: #8B4513\n--accent: #DAA520\n--font-heading: 20px adventure
+end
+
+CSS -> Shell: Re-render all components\nwith updated variables
+Shell -> Parent: UI reflects new\nage-band theme
+
+@enduml

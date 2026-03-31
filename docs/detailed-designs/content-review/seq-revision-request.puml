@@ -1,0 +1,30 @@
+@startuml seq-revision-request
+title Revision Request Flow
+
+actor "Reviewer" as R
+participant "ReviewController" as Ctrl
+participant "ReviewService" as Svc
+participant "NotificationService" as Notif
+database "PostgreSQL" as DB
+actor "Content Creator" as CC
+
+R -> Ctrl : POST /reviews/:id/decide\n{ decision: "revise",\ncomments: "Fix scripture ref\nin scene 3",\nchecklist: {...} }
+
+Ctrl -> Svc : submitDecision(requestId,\nreviewerId, "revise", ...)
+Svc -> DB : INSERT ReviewDecision
+Svc -> DB : UPDATE ReviewRequest\n(status=REVISION_REQUESTED)
+Svc -> Notif : notifyRevisionRequested(\nrequestId, creatorId)
+Notif --> CC : Email: "Revision requested"\nwith reviewer comments
+
+CC -> CC : Update content\n(fix scripture reference)
+
+CC -> Ctrl : POST /reviews/:id/resubmit
+Ctrl -> Svc : resubmit(requestId)
+Svc -> DB : DELETE previous\nReviewDecisions
+Svc -> DB : UPDATE ReviewRequest\n(status=RESUBMITTED)
+Svc -> Svc : assignReviewers()\n(may reassign)
+Svc -> DB : UPDATE ReviewRequest\n(status=IN_REVIEW)
+Svc -> Notif : notifyReviewersAssigned()
+Notif --> R : Email: "Content resubmitted\nfor review"
+
+@enduml

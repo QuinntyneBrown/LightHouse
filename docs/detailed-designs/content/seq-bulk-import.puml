@@ -1,0 +1,32 @@
+@startuml seq-bulk-import
+title Bulk Content Import
+
+actor Admin as A
+participant "Admin Dashboard" as UI
+participant "ContentController" as Ctrl
+participant "ContentService" as Svc
+database "PostgreSQL" as DB
+database "MinIO" as S3
+
+A -> UI : Upload CSV file\n(title, type, category,\nscripture, mediaUrl)
+UI -> Ctrl : POST /content/import\n(multipart: CSV file)
+
+Ctrl -> Svc : bulkImport(csvFile)
+Svc -> Svc : Parse CSV rows
+
+loop For each row
+    Svc -> Svc : Validate required fields\n(title, type, category)
+    alt Valid row
+        Svc -> DB : INSERT Content\n(status=DRAFT)
+        Svc -> DB : INSERT Tags\n(category, ageBand)
+        Svc -> DB : INSERT ScriptureReference\n(if provided)
+    else Invalid row
+        Svc -> Svc : Add to error list\nwith row number
+    end
+end
+
+Svc --> Ctrl : { imported: N,\nfailed: M, errors[] }
+Ctrl --> UI : 200 { summary }
+UI --> A : Show import results\nwith error details
+
+@enduml

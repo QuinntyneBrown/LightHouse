@@ -1,0 +1,27 @@
+@startuml c4-component
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Media Module — Component Diagram
+
+Container_Boundary(media, "Media Module") {
+  Component(ctrl, "MediaController", "Fastify Routes", "Upload URL generation, upload confirmation, transcoding status, variant listing, download manifest")
+  Component(storage, "StorageService", "Service", "MinIO client wrapper, presigned URL generation, bucket management")
+  Component(transcode, "TranscodingService", "Service", "ffmpeg job queue, HLS segment generation, quality variant creation")
+  Component(thumb, "ThumbnailService", "Service", "Video thumbnail extraction, audio cover art resize")
+  Component(offline, "OfflineService", "Service", "Download manifest generation for PWA service worker caching")
+}
+
+ContainerDb(pg, "PostgreSQL", "MediaAsset, MediaVariant, TranscodingJob")
+ContainerDb(minio, "MinIO", "originals, transcoded, thumbnails buckets")
+
+Rel(ctrl, storage, "Generates presigned URLs")
+Rel(ctrl, transcode, "Queues and queries jobs")
+Rel(ctrl, thumb, "Triggers thumbnail generation")
+Rel(ctrl, offline, "Generates download manifests")
+Rel(storage, minio, "S3 API calls")
+Rel(transcode, minio, "Reads originals, writes HLS")
+Rel(thumb, minio, "Writes thumbnails")
+Rel(ctrl, pg, "Persists asset and variant records")
+Rel(transcode, pg, "Updates job status")
+
+@enduml

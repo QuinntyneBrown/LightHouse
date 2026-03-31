@@ -1,0 +1,70 @@
+@startuml class-engagement-domain
+title Engagement Domain Model
+
+class Badge {
+    +id: string
+    +name: string
+    +description: string
+    +iconName: string
+    +category: string
+    +criteria: string
+}
+
+class BadgeRule {
+    +id: string
+    +badgeId: string
+    +type: BadgeRuleType
+    +threshold: number
+}
+
+enum BadgeRuleType {
+    COMPLETE_SERIES
+    WATCH_COUNT
+    STREAK_DAYS
+    VERSE_COUNT
+    FIRST_PLAY
+}
+
+class ChildBadge {
+    +id: string
+    +profileId: string
+    +badgeId: string
+    +earnedAt: DateTime
+}
+
+class ChildProgress {
+    +id: string
+    +profileId: string
+    +totalCompleted: number
+    +seriesProgress: SeriesEntry[]
+    --
+    +completionPercent(seriesId): number
+}
+
+class SeriesEntry {
+    +seriesId: string
+    +completedItems: number
+    +totalItems: number
+}
+
+class MemoryVerse {
+    +id: string
+    +reference: string
+    +text: string
+    +dayOfYear: number
+}
+
+class MemoryVerseCompletion {
+    +id: string
+    +profileId: string
+    +verseId: string
+    +completedAt: DateTime
+}
+
+Badge "1" --> "*" BadgeRule : has
+BadgeRule ..> BadgeRuleType : uses
+Badge "1" <-- "*" ChildBadge : awards
+ChildProgress "1" --> "*" SeriesEntry : contains
+MemoryVerse "1" <-- "*" MemoryVerseCompletion : tracks
+
+@enduml

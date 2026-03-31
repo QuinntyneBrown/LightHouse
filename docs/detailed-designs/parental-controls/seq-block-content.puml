@@ -1,0 +1,38 @@
+@startuml seq-block-content
+title Block Content for a Child Profile
+
+actor "Parent" as parent
+participant "Next.js Frontend" as ui
+participant "ParentalController" as ctrl
+participant "ContentBlockService" as block
+database "PostgreSQL" as db
+
+parent -> ui : Opens Content Library\nin Parent Dashboard
+ui -> ctrl : GET /api/parental/content\n?profileId={id}&page=1
+
+ctrl -> block : getContentWithBlockStatus(\nprofileId, page)
+block -> db : Fetch content list\nwith block flags
+db --> block : content[] with isBlocked
+block --> ctrl : contentList
+ctrl --> ui : 200 { items[] }
+
+ui -> parent : Show content grid\nwith block toggles
+
+parent -> ui : Toggles block on\n"Adventure Series Ep.3"
+ui -> ctrl : POST /api/parental/block\n{ profileId, contentId }
+
+ctrl -> block : blockContent(profileId,\ncontentId)
+block -> db : INSERT BlockedContent
+db --> block : confirmed
+block --> ctrl : success
+ctrl --> ui : 201 Created
+
+ui -> parent : Toggle shows "Blocked"\nwith visual indicator
+
+note right of block
+  Blocked content is excluded from
+  the child's feed and search results.
+  PlaylistEngine also skips blocked items.
+end note
+
+@enduml

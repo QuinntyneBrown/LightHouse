@@ -1,0 +1,71 @@
+@startuml class-content-domain
+title Content Domain Model
+
+enum ContentType {
+    VIDEO
+    AUDIO
+    DEVOTIONAL
+    ACTIVITY
+}
+
+enum ContentStatus {
+    DRAFT
+    PENDING_REVIEW
+    APPROVED
+    PUBLISHED
+    ARCHIVED
+    REJECTED
+}
+
+class Content {
+    +id: UUID
+    +title: string
+    +description: string
+    +type: ContentType
+    +status: ContentStatus
+    +duration: int?
+    +thumbnailUrl: string
+    +streamUrl: string
+    +seriesId: UUID?
+    +createdAt: DateTime
+}
+
+class Category {
+    +id: UUID
+    +name: string
+    +slug: string
+    +iconName: string
+    +color: string
+}
+
+class Tag {
+    +id: UUID
+    +contentId: UUID
+    +key: string
+    +value: string
+}
+
+class ScriptureReference {
+    +id: UUID
+    +contentId: UUID
+    +book: string
+    +chapter: int
+    +verseStart: int
+    +verseEnd: int?
+}
+
+class Series {
+    +id: UUID
+    +name: string
+    +description: string
+    +order: int
+}
+
+Content "0..*" --> "1..*" Category : categorized by
+Content "1" --> "0..*" Tag : tagged with
+Content "1" --> "0..*" ScriptureReference : references
+Content "0..*" --> "0..1" Series : belongs to
+Content --> ContentType
+Content --> ContentStatus
+
+@enduml

@@ -1,0 +1,37 @@
+@startuml seq-review-workflow
+title Content Review Workflow
+
+actor "Content Creator" as CC
+participant "ReviewController" as Ctrl
+participant "ReviewService" as Svc
+participant "ReviewBoardService" as Board
+participant "NotificationService" as Notif
+database "PostgreSQL" as DB
+actor "Reviewer A" as RA
+actor "Reviewer B" as RB
+
+CC -> Ctrl : Submit content for review
+Ctrl -> Svc : submitForReview(contentId)
+Svc -> DB : INSERT ReviewRequest\n(status=SUBMITTED)
+Svc -> Board : getNextReviewers(2)
+Board -> DB : SELECT board members\nORDER BY last assignment
+Board --> Svc : [reviewerA, reviewerB]
+Svc -> DB : UPDATE ReviewRequest\n(assignedReviewers, status=IN_REVIEW)
+Svc -> Notif : notifyReviewersAssigned()
+Notif --> RA : Email + push notification
+Notif --> RB : Email + push notification
+
+RA -> Ctrl : POST /reviews/:id/decide\n{ decision: "approve",\nchecklist: {...} }
+Ctrl -> Svc : submitDecision(...)
+Svc -> DB : INSERT ReviewDecision
+Svc -> Svc : evaluateConsensus()\n(1 of 2 approved)
+
+RB -> Ctrl : POST /reviews/:id/decide\n{ decision: "approve",\nchecklist: {...} }
+Ctrl -> Svc : submitDecision(...)
+Svc -> DB : INSERT ReviewDecision
+Svc -> Svc : evaluateConsensus()\n(2 of 2 approved)
+Svc -> DB : UPDATE ReviewRequest\n(status=APPROVED)
+Svc -> Notif : notifyApproved()
+Notif --> CC : Content approved notification
+
+@enduml

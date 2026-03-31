@@ -1,0 +1,41 @@
+@startuml seq-memory-verse
+title Memory Verse of the Day
+
+actor "Child" as child
+participant "Next.js Frontend" as ui
+participant "EngagementController" as ctrl
+participant "MemoryVerseService" as verse
+database "PostgreSQL" as db
+
+child -> ui : Opens app / home screen
+ui -> ctrl : GET /api/engagement/verse/today\n?profileId={id}
+
+ctrl -> verse : getTodaysVerse(profileId)
+verse -> verse : Calculate dayOfYear\nfrom current date
+
+verse -> db : SELECT MemoryVerse\nWHERE dayOfYear = {day}
+db --> verse : verse { reference, text }
+
+verse -> db : Check MemoryVerseCompletion\nfor profileId + verseId
+db --> verse : completion (or null)
+
+verse --> ctrl : { verse, isCompleted }
+ctrl --> ui : 200 { reference: "John 3:16",\ntext: "For God so loved...",\nisCompleted: false }
+
+ui -> child : Display verse card\nwith read-along option
+
+child -> ui : Taps "Read Along"
+ui -> ui : Highlight words\nin sequence\n(read-along animation)
+
+child -> ui : Taps "I Memorized It!"
+ui -> ctrl : POST /api/engagement/verse/complete\n{ profileId, verseId }
+
+ctrl -> verse : markCompleted(\nprofileId, verseId)
+verse -> db : INSERT MemoryVerseCompletion
+db --> verse : confirmed
+
+verse --> ctrl : { completed: true }
+ctrl --> ui : 201 Created
+ui -> child : Star animation +\n"Great job!" message
+
+@enduml

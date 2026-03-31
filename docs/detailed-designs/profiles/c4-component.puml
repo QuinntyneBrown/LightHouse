@@ -1,0 +1,21 @@
+@startuml c4-component
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Component Diagram -- Profiles Module
+
+Container_Boundary(api, "Fastify API") {
+    Component(profileCtrl, "ProfileController", "Fastify Route", "CRUD handlers, avatar listing,\nprofile activation endpoint")
+    Component(profileSvc, "ProfileService", "Service", "Profile business logic,\nage band resolution,\nmax-profile enforcement")
+    Component(avatarSvc, "AvatarService", "Service", "Avatar catalog management,\nassignment validation")
+}
+
+ContainerDb(db, "PostgreSQL", "Prisma ORM", "ParentAccount, ChildProfile,\nAvatar tables")
+Container(pwa, "Next.js PWA", "Next.js 15", "Profile selection UI,\navatar picker")
+
+Rel(pwa, profileCtrl, "REST / JSON")
+Rel(profileCtrl, profileSvc, "Delegates")
+Rel(profileCtrl, avatarSvc, "Avatar ops")
+Rel(profileSvc, db, "Prisma", "Profile CRUD")
+Rel(avatarSvc, db, "Prisma", "Avatar queries")
+
+@enduml

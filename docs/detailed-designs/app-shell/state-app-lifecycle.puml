@@ -1,0 +1,45 @@
+@startuml state-app-lifecycle
+title App Shell — PWA Lifecycle State Diagram
+
+[*] --> Loading : App opened
+
+Loading --> Online : Network available,\nservice worker registered
+
+Online --> Offline : Network lost
+Offline --> Online : Network restored
+
+state Online {
+  [*] --> Active
+  Active --> BackgroundSync : App backgrounded
+  BackgroundSync --> Active : App foregrounded
+  Active --> UpdateAvailable : New SW version detected
+  UpdateAvailable --> Updating : User accepts update\nor auto-update
+  Updating --> Active : SW activated,\npage reloaded
+}
+
+state Offline {
+  [*] --> CachedContent : Serving from\nservice worker cache
+  CachedContent --> LimitedMode : Requested content\nnot cached
+  LimitedMode --> CachedContent : Navigate to\ncached content
+}
+
+note right of Offline
+  OfflineIndicator banner shown.
+  Only cached content and
+  previously downloaded media
+  are available.
+end note
+
+note right of UpdateAvailable
+  User sees prompt:
+  "A new version is available.
+  Tap to update."
+end note
+
+note left of Loading
+  Splash screen shown.
+  SW registration and
+  cache check in progress.
+end note
+
+@enduml

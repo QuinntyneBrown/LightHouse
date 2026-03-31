@@ -1,0 +1,27 @@
+@startuml c4-component
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Parental Controls - Component Diagram
+
+Container_Boundary(parental, "Parental Controls Module") {
+    Component(ctrl, "ParentalController", "Fastify Route Handler", "Dashboard, screen time CRUD, blocking, history endpoints")
+    Component(screentime, "ScreenTimeService", "TypeScript Service", "Timer tracking, limit enforcement, usage calculation, remaining time")
+    Component(block, "ContentBlockService", "TypeScript Service", "Per-child content visibility filtering, block/unblock")
+    Component(history, "ViewHistoryService", "TypeScript Service", "Watch event recording, history aggregation, weekly summaries")
+    Component(pin, "PINService", "TypeScript Service", "PIN verify for parent area access, lockout after failures")
+}
+
+ContainerDb(db, "PostgreSQL", "Prisma ORM", "ScreenTimeRule, ScreenTimeSession, BlockedContent, ViewHistory")
+
+Rel(ctrl, pin, "Validates parent PIN")
+Rel(ctrl, screentime, "Manages screen time rules")
+Rel(ctrl, block, "Manages content blocks")
+Rel(ctrl, history, "Retrieves viewing history")
+Rel(screentime, db, "Reads/writes time rules\nand sessions")
+Rel(block, db, "Reads/writes block list")
+Rel(history, db, "Reads/writes view history")
+Rel(pin, db, "Reads PIN hash,\nwrites lockout state")
+
+@enduml

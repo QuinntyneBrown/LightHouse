@@ -1,0 +1,19 @@
+@startuml state-auth-session
+title Auth Session State Machine
+
+[*] --> Unauthenticated
+
+Unauthenticated --> Authenticating : Login / Register /\nOAuth initiated
+Authenticating --> Authenticated : Credentials valid,\ntokens issued
+Authenticating --> Unauthenticated : Invalid credentials /\nOAuth cancelled
+
+Authenticated --> TokenExpired : Access token TTL\nexceeded (15 min)
+Authenticated --> Unauthenticated : User logs out /\nsession revoked
+
+TokenExpired --> Refreshing : Refresh token\nsubmitted
+Refreshing --> Authenticated : Refresh valid,\nnew access token
+Refreshing --> SessionExpired : Refresh token\ninvalid or expired
+
+SessionExpired --> Unauthenticated : Redirect to login
+
+@enduml

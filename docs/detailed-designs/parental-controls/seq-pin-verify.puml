@@ -1,0 +1,46 @@
+@startuml seq-pin-verify
+title PIN Verification for Parent Access
+
+actor "Parent" as parent
+participant "Next.js Frontend" as ui
+participant "ParentalController" as ctrl
+participant "PINService" as pin
+database "PostgreSQL" as db
+
+parent -> ui : Taps "Parent" tab
+ui -> ui : Show PIN entry overlay\n(4-digit keypad)
+
+parent -> ui : Enters 4-digit PIN
+ui -> ctrl : POST /api/auth/pin/verify\n{ familyId, pin }
+
+ctrl -> pin : verifyPIN(familyId, pin)
+pin -> db : Fetch family PIN hash\nand lockout state
+
+alt Account is locked out
+    db --> pin : lockedUntil > now
+    pin --> ctrl : { error: "LOCKED_OUT",\nretryAfter: seconds }
+    ctrl --> ui : 423 Locked
+    ui -> parent : "Too many attempts.\nTry again in X minutes."
+else PIN is correct
+    pin -> pin : bcrypt.compare(pin, hash)
+    pin -> db : Reset failure count
+    pin --> ctrl : { valid: true,\nparentToken: JWT }
+    ctrl --> ui : 200 { parentToken }
+    ui -> ui : Store token in memory\n(not localStorage)
+    ui -> parent : Show Parent Dashboard
+else PIN is incorrect
+    pin -> pin : bcrypt.compare(pin, hash)
+    pin -> db : Increment failure count
+    alt Failures >= 5
+        pin -> db : Set lockedUntil\n(now + 15 minutes)
+        pin --> ctrl : { error: "LOCKED_OUT" }
+        ctrl --> ui : 423 Locked
+        ui -> parent : "Too many attempts.\nLocked for 15 minutes."
+    else Failures < 5
+        pin --> ctrl : { valid: false,\nattemptsRemaining }
+        ctrl --> ui : 401 Unauthorized
+        ui -> parent : "Incorrect PIN.\nX attempts remaining."
+    end
+end
+
+@enduml

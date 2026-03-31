@@ -1,0 +1,38 @@
+@startuml state-screentime
+title Screen Time State Machine
+
+[*] --> Unlimited : No rule configured\nor rule disabled
+
+state Unlimited {
+}
+
+state TimerRunning {
+}
+
+state WarningThreshold {
+}
+
+state LimitReached {
+}
+
+state ExtendedByParent {
+}
+
+Unlimited --> TimerRunning : Parent enables\nscreen time rule
+
+TimerRunning --> WarningThreshold : Remaining <= 5 minutes /\nshow gentle warning
+
+WarningThreshold --> LimitReached : Remaining = 0 /\npause playback,\nshow overlay
+
+LimitReached --> ExtendedByParent : Parent enters PIN\nand grants extra time
+
+ExtendedByParent --> TimerRunning : Extension applied /\nresume playback
+
+TimerRunning --> Unlimited : Parent disables rule
+WarningThreshold --> Unlimited : Parent disables rule
+
+TimerRunning --> TimerRunning : New day /\nreset elapsed to 0
+
+LimitReached --> TimerRunning : New day /\nreset elapsed to 0
+
+@enduml

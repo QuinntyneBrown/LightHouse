@@ -1,0 +1,59 @@
+@startuml class-shell-domain
+title App Shell Domain — Type Diagram
+
+class Tab {
+  +id: string
+  +label: string
+  +iconName: string
+  +route: string
+  +requiresAuth: boolean
+}
+
+class AgeBandTheme {
+  +colors: ThemeColors
+  +fontSizes: FontSizes
+  +illustrations: string
+}
+
+class ThemeColors {
+  +primary: string
+  +secondary: string
+  +accent: string
+  +background: string
+}
+
+class FontSizes {
+  +heading: string
+  +body: string
+  +caption: string
+}
+
+class NavigationState {
+  +activeTab: string
+  +activeProfile: Profile | null
+  +isOnline: boolean
+  +screenTimeRemaining: number | null
+}
+
+class PWAConfig {
+  +name: string
+  +shortName: string
+  +display: "standalone"
+  +themeColor: string
+  +backgroundColor: string
+  +icons: Icon[]
+}
+
+AgeBandTheme --> ThemeColors : colors
+AgeBandTheme --> FontSizes : fontSizes
+NavigationState --> Tab : activeTab references
+NavigationState --> AgeBandTheme : resolved from profile
+
+note bottom of AgeBandTheme
+  Three predefined themes:
+  - Seedlings (0-3): soft pastels
+  - Sprouts (4-6): bright primary
+  - Explorers (7-9): adventurous
+end note
+
+@enduml

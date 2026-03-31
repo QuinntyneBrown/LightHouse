@@ -1,0 +1,25 @@
+@startuml c4-container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Container Diagram -- LightHouse Auth Data Flows
+
+Person(parent, "Parent", "Registers and logs in")
+
+System_Boundary(lh, "LightHouse Platform") {
+    Container(pwa, "Next.js PWA", "Next.js 15, Tailwind", "Login forms, OAuth redirects,\ntoken storage in memory")
+    Container(api, "Fastify API", "Fastify, TypeScript", "Auth endpoints, JWT validation,\nCOPPA enforcement")
+    ContainerDb(db, "PostgreSQL", "Prisma ORM", "Accounts, sessions,\nconsent records, PINs")
+}
+
+System_Ext(keycloak, "Keycloak", "Identity provider,\nOIDC token issuance")
+System_Ext(google, "Google OAuth", "Social identity provider")
+System_Ext(apple, "Apple OAuth", "Social identity provider")
+
+Rel(parent, pwa, "HTTPS")
+Rel(pwa, api, "REST / JSON", "Auth requests")
+Rel(api, keycloak, "OIDC + Admin API", "User mgmt, tokens")
+Rel(api, db, "Prisma", "Read/write auth data")
+Rel(keycloak, google, "OAuth 2.0")
+Rel(keycloak, apple, "OAuth 2.0")
+
+@enduml

@@ -1,0 +1,23 @@
+@startuml c4-component
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Component Diagram -- Content Review Module
+
+Container_Boundary(api, "Fastify API") {
+    Component(reviewCtrl, "ReviewController", "Fastify Route", "Review list, detail,\ndecision submission, comments")
+    Component(reviewSvc, "ReviewService", "Service", "Workflow orchestration,\nconsensus evaluation")
+    Component(boardSvc, "ReviewBoardService", "Service", "Board member management,\nrotation-based assignment")
+    Component(notifSvc, "NotificationService", "Service", "Email and push notifications\nfor review events")
+}
+
+ContainerDb(db, "PostgreSQL", "Prisma ORM", "ReviewRequests,\nDecisions, Comments")
+Container(pwa, "Admin Dashboard", "Next.js 15", "Review queue UI,\nchecklist forms")
+
+Rel(pwa, reviewCtrl, "REST / JSON")
+Rel(reviewCtrl, reviewSvc, "Delegates")
+Rel(reviewSvc, boardSvc, "Assign reviewers")
+Rel(reviewSvc, notifSvc, "Trigger notifications")
+Rel(reviewSvc, db, "Prisma", "Review data")
+Rel(boardSvc, db, "Prisma", "Board members")
+
+@enduml

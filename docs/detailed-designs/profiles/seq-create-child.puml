@@ -1,0 +1,32 @@
+@startuml seq-create-child
+title Create Child Profile
+
+actor Parent as P
+participant "Next.js PWA" as PWA
+participant "ProfileController" as Ctrl
+participant "ProfileService" as Svc
+participant "AvatarService" as Avatar
+database "PostgreSQL" as DB
+
+P -> PWA : Fill form:\nname, age band, avatar
+PWA -> Ctrl : POST /profiles\n{ name, ageBand, avatarId }
+
+Ctrl -> Svc : createProfile(parentId, data)
+Svc -> DB : SELECT COUNT(*)\nWHERE parentId = ?
+Svc -> Svc : Enforce max 6 profiles
+
+Svc -> DB : SELECT name\nWHERE parentId = ?\nAND name = ?
+Svc -> Svc : Enforce unique name
+
+Svc -> Avatar : getAvatar(avatarId)
+Avatar -> DB : SELECT * FROM avatars\nWHERE id = ?
+Avatar --> Svc : Avatar valid
+
+Svc -> DB : INSERT ChildProfile\n(name, ageBand, avatarId,\nisActive=false)
+DB --> Svc : profile created
+
+Svc --> Ctrl : ChildProfile
+Ctrl --> PWA : 201 { profile }
+PWA --> P : Show new profile\non selection screen
+
+@enduml

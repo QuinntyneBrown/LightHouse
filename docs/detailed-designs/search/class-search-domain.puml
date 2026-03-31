@@ -1,0 +1,70 @@
+@startuml class-search-domain
+title Search Domain Model
+
+class SearchQuery {
+    +query: string
+    +filters: SearchFilter
+    +page: number
+    +limit: number
+    --
+    +toMeilisearchParams(): object
+}
+
+class SearchFilter {
+    +ageBand: string?
+    +category: string?
+    +type: ContentType?
+    +scriptureBook: string?
+    --
+    +toFilterExpression(): string
+}
+
+enum ContentType {
+    VIDEO
+    AUDIO
+    STORY
+}
+
+class SearchResult {
+    +items: SearchResultItem[]
+    +totalHits: number
+    +processingTimeMs: number
+    +facets: FacetMap
+}
+
+class SearchResultItem {
+    +id: string
+    +title: string
+    +description: string
+    +thumbnailUrl: string
+    +type: ContentType
+    +duration: number
+    +ageBands: string[]
+}
+
+class IndexDocument {
+    +id: string
+    +title: string
+    +description: string
+    +categories: string[]
+    +ageBands: string[]
+    +scriptureRefs: string[]
+    +type: ContentType
+    +duration: number
+    +publishedAt: DateTime
+}
+
+class FacetConfig {
+    +facetFields: string[]
+    +maxValuesPerFacet: number
+    --
+    +getDistribution(): FacetMap
+}
+
+SearchQuery "1" --> "1" SearchFilter : contains
+SearchResult "1" --> "*" SearchResultItem : contains
+SearchFilter ..> ContentType : uses
+IndexDocument ..> ContentType : uses
+SearchResult "1" --> "0..1" FacetConfig : uses
+
+@enduml

@@ -1,0 +1,57 @@
+@startuml class-review-domain
+title Content Review Domain Model
+
+enum ReviewStatus {
+    SUBMITTED
+    IN_REVIEW
+    REVISION_REQUESTED
+    RESUBMITTED
+    APPROVED
+    REJECTED
+}
+
+class ReviewRequest {
+    +id: UUID
+    +contentId: UUID
+    +status: ReviewStatus
+    +assignedReviewers: UUID[]
+    +createdAt: DateTime
+}
+
+class ReviewDecision {
+    +id: UUID
+    +requestId: UUID
+    +reviewerId: UUID
+    +decision: string
+    +comments: string
+    +checklist: TheologicalChecklist
+    +decidedAt: DateTime
+}
+
+class ReviewComment {
+    +id: UUID
+    +requestId: UUID
+    +reviewerId: UUID
+    +text: string
+    +createdAt: DateTime
+}
+
+class TheologicalChecklist {
+    +biblicalAccuracy: boolean
+    +biblicalNotes: string
+    +ageAppropriateness: boolean
+    +ageNotes: string
+    +productionQuality: boolean
+    +productionNotes: string
+    +culturalSensitivity: boolean
+    +culturalNotes: string
+    +inclusivity: boolean
+    +inclusivityNotes: string
+}
+
+ReviewRequest "1" --> "0..*" ReviewDecision : decisions
+ReviewRequest "1" --> "0..*" ReviewComment : comments
+ReviewDecision "1" *-- "1" TheologicalChecklist : includes
+ReviewRequest --> ReviewStatus
+
+@enduml

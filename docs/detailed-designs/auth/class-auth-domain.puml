@@ -1,0 +1,59 @@
+@startuml class-auth-domain
+title Auth Domain Model
+
+enum Role {
+    PARENT
+    ADMIN
+}
+
+enum ConsentStatus {
+    PENDING
+    VERIFIED
+    REVOKED
+}
+
+enum OAuthProvider {
+    GOOGLE
+    APPLE
+}
+
+class Account {
+    +id: UUID
+    +email: string
+    +keycloakId: string
+    +role: Role
+    +consentStatus: ConsentStatus
+    +createdAt: DateTime
+}
+
+class Session {
+    +id: UUID
+    +accountId: UUID
+    +refreshToken: string
+    +expiresAt: DateTime
+    +deviceInfo: JSON
+}
+
+class ConsentRecord {
+    +id: UUID
+    +accountId: UUID
+    +method: string
+    +verifiedAt: DateTime
+    +revokedAt: DateTime?
+}
+
+class PIN {
+    +id: UUID
+    +accountId: UUID
+    +hashedPin: string
+    +failedAttempts: int
+    +lockedUntil: DateTime?
+}
+
+Account "1" --> "0..*" Session : has
+Account "1" --> "0..*" ConsentRecord : has
+Account "1" --> "0..1" PIN : has
+Account --> Role
+Account --> ConsentStatus
+
+@enduml

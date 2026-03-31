@@ -1,0 +1,39 @@
+@startuml state-badge-progress
+title Badge Progress State Machine
+
+[*] --> Locked
+
+state Locked {
+}
+
+state InProgress {
+}
+
+state Earned {
+}
+
+state Displayed {
+}
+
+Locked --> InProgress : First qualifying\naction recorded
+Locked --> Earned : Single-action badge\n(e.g., FIRST_PLAY)\nthreshold = 1
+
+InProgress --> InProgress : Progress incremented /\nupdate progress counter
+InProgress --> Earned : Threshold met /\naward badge,\nshow celebration
+
+Earned --> Displayed : Celebration dismissed /\nbadge visible in profile
+
+note right of InProgress
+  Progress is tracked silently.
+  No pressure or countdown
+  is shown to the child.
+  Badges are a surprise reward.
+end note
+
+note right of Displayed
+  Badges remain permanently
+  in the child's profile.
+  They cannot be revoked.
+end note
+
+@enduml

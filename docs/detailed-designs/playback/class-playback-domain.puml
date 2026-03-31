@@ -1,0 +1,61 @@
+@startuml class-playback-domain
+title Playback Domain Model
+
+enum PlayerState {
+    IDLE
+    LOADING
+    PLAYING
+    PAUSED
+    BUFFERING
+    ENDED
+    ERROR
+}
+
+class PlaybackSession {
+    +id: string
+    +profileId: string
+    +contentId: string
+    +startedAt: DateTime
+    +endedAt: DateTime?
+    +duration: number
+    +completed: boolean
+}
+
+class WatchProgress {
+    +id: string
+    +profileId: string
+    +contentId: string
+    +position: number
+    +totalDuration: number
+    +updatedAt: DateTime
+    --
+    +percentComplete(): number
+    +canResume(): boolean
+}
+
+class ContentStream {
+    +hlsManifestUrl: string
+    +qualities: StreamQuality[]
+    +thumbnailUrl: string
+}
+
+class StreamQuality {
+    +label: string
+    +resolution: string
+    +bitrate: number
+}
+
+class PlaylistItem {
+    +contentId: string
+    +title: string
+    +order: number
+    +duration: number
+    +type: "VIDEO" | "AUDIO"
+    +thumbnailUrl: string
+}
+
+PlaybackSession "1" --> "1" WatchProgress : tracks
+ContentStream "1" --> "*" StreamQuality : offers
+PlaybackSession ..> PlayerState : uses
+
+@enduml

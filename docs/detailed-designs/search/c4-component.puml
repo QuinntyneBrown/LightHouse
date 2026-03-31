@@ -1,0 +1,25 @@
+@startuml c4-component
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Search Feature - Component Diagram
+
+Container_Boundary(search, "Search Module") {
+    Component(ctrl, "SearchController", "Fastify Route Handler", "Search endpoint, suggestions endpoint, admin reindex trigger")
+    Component(svc, "SearchService", "TypeScript Service", "Meilisearch query construction, filter application, result transformation")
+    Component(sync, "IndexSyncService", "TypeScript Service", "Content-to-Meilisearch document mapping, publish/update/delete sync")
+    Component(filter, "FilterService", "TypeScript Service", "Age band, category, content type filter building")
+}
+
+Container(meili, "Meilisearch", "Search Engine", "Full-text index with typo tolerance")
+ContainerDb(db, "PostgreSQL", "Prisma ORM", "Content source of truth")
+
+Rel(ctrl, svc, "Delegates search queries")
+Rel(ctrl, sync, "Triggers reindex (admin)")
+Rel(svc, filter, "Builds filter expressions")
+Rel(svc, meili, "Executes search queries")
+Rel(sync, db, "Reads content records")
+Rel(sync, meili, "Upserts/deletes documents")
+
+@enduml

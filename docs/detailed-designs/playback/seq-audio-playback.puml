@@ -1,0 +1,42 @@
+@startuml seq-audio-playback
+title Audio Playback Flow
+
+actor "Child" as child
+participant "Next.js Frontend" as ui
+participant "PlaybackController" as ctrl
+participant "PlaybackService" as svc
+participant "StreamResolver" as resolver
+participant "ProgressTracker" as tracker
+database "PostgreSQL" as db
+
+child -> ui : Taps audio content\n(Bible story, song, etc.)
+ui -> ctrl : GET /api/playback/stream/{contentId}
+ctrl -> svc : getStream(contentId, profileId)
+
+svc -> resolver : resolveStreamUrl(contentId)
+resolver --> svc : ContentStream\n(audio manifest URL)
+
+svc -> db : Check WatchProgress
+db --> svc : resumePosition (or 0)
+
+svc --> ctrl : { stream, resumeAt }
+ctrl --> ui : 200 { hlsManifestUrl,\ncoverArtUrl, resumeAt }
+
+ui -> ui : Display cover art\nand audio controls
+ui -> ui : Start audio playback\nvia HLS.js
+
+loop Every 15 seconds while playing
+    ui -> ctrl : POST /api/playback/progress\n{ position, duration }
+    ctrl -> tracker : saveProgress(profileId,\ncontentId, position)
+    tracker -> db : Upsert WatchProgress
+end
+
+ui -> ui : Audio reaches end
+ui -> ctrl : POST /api/playback/complete
+ctrl -> tracker : markCompleted(sessionId)
+tracker -> db : Update session\n(completed=true)
+
+ctrl --> ui : 200 OK
+ui -> child : Show completion\nconfirmation
+
+@enduml

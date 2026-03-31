@@ -1,0 +1,44 @@
+@startuml seq-earn-badge
+title Earn a Badge
+
+actor "Child" as child
+participant "Next.js Frontend" as ui
+participant "PlaybackController" as play
+participant "ProgressService" as progress
+participant "BadgeService" as badge
+database "PostgreSQL" as db
+
+child -> ui : Watches content\nto completion
+ui -> play : POST /api/playback/complete\n{ contentId, sessionId }
+
+play -> progress : recordCompletion(\nprofileId, contentId)
+progress -> db : Update ChildProgress\n(totalCompleted++,\nseriesProgress updated)
+db --> progress : updatedProgress
+
+progress -> badge : evaluateRules(profileId,\nupdatedProgress)
+badge -> db : Fetch all BadgeRules
+db --> badge : rules[]
+
+badge -> badge : Check each rule against\ncurrent progress
+
+alt Rule threshold met (e.g., WATCH_COUNT >= 10)
+    badge -> db : Check ChildBadge\n(prevent duplicate)
+    db --> badge : not yet awarded
+
+    badge -> db : INSERT ChildBadge\n(profileId, badgeId, now)
+    db --> badge : confirmed
+
+    badge --> progress : { newBadge: Badge }
+    progress --> play : { badgeEarned: Badge }
+    play --> ui : 200 { completed: true,\nbadgeEarned: { name, icon } }
+
+    ui -> ui : Show celebration animation\n"You earned the\nSuper Watcher badge!"
+    ui -> child : Confetti + badge icon
+else No new badge earned
+    badge --> progress : { newBadge: null }
+    progress --> play : { badgeEarned: null }
+    play --> ui : 200 { completed: true }
+    ui -> child : Completion confirmation
+end
+
+@enduml

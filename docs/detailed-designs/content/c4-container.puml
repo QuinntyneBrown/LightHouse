@@ -1,0 +1,24 @@
+@startuml c4-container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Container Diagram -- Content Management
+
+Person(admin, "Admin", "Content creator")
+
+System_Boundary(lh, "LightHouse Platform") {
+    Container(adminWeb, "Admin Dashboard", "Next.js 15", "Content CRUD UI,\nupload forms, tagging")
+    Container(api, "Fastify API", "Fastify, TypeScript", "Content module:\nCRUD, upload, indexing")
+    ContainerDb(db, "PostgreSQL", "Prisma ORM", "Content, categories,\ntags, scripture refs")
+}
+
+System_Ext(minio, "MinIO", "S3-compatible\nobject storage")
+System_Ext(meili, "Meilisearch", "Search engine")
+
+Rel(admin, adminWeb, "HTTPS")
+Rel(adminWeb, api, "REST / JSON")
+Rel(adminWeb, minio, "Direct upload\nvia presigned URL")
+Rel(api, db, "Prisma", "Content metadata")
+Rel(api, minio, "Presigned URLs,\nupload verification")
+Rel(api, meili, "Index on publish,\nremove on archive")
+
+@enduml

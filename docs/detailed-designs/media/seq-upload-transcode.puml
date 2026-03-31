@@ -1,0 +1,35 @@
+@startuml seq-upload-transcode
+title Media Upload and Transcoding Flow
+
+actor Admin
+participant "MediaController" as API
+participant "StorageService" as Storage
+participant "MinIO" as MinIO
+participant "TranscodingService" as Transcode
+participant "ThumbnailService" as Thumb
+database "PostgreSQL" as DB
+
+Admin -> API: POST /media/upload-url\n{filename, mimeType}
+API -> Storage: generatePresignedUrl(bucket: originals)
+Storage -> MinIO: createPresignedPut()
+Storage --> API: presignedUrl, assetId
+API -> DB: insert MediaAsset (status: pending)
+API --> Admin: {uploadUrl, assetId}
+
+Admin -> MinIO: PUT file via presigned URL
+Admin -> API: POST /media/{assetId}/confirm
+
+API -> DB: update MediaAsset (uploadedAt)
+API -> Transcode: enqueueJob(assetId)
+Transcode -> DB: insert TranscodingJob (QUEUED)
+API --> Admin: {status: "transcoding"}
+
+Transcode -> MinIO: download original
+Transcode -> Transcode: ffmpeg HLS transcode\n(360p, 480p, 720p)
+Transcode -> MinIO: upload HLS segments\n(transcoded bucket)
+Transcode -> DB: insert MediaVariants
+Transcode -> Thumb: extractThumbnail(assetId)
+Thumb -> MinIO: upload thumbnail\n(thumbnails bucket)
+Transcode -> DB: update TranscodingJob (COMPLETED)
+
+@enduml

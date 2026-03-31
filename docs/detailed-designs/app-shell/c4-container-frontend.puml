@@ -1,0 +1,30 @@
+@startuml c4-container-frontend
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title App Shell — Frontend Container Diagram
+
+Person(child, "Child", "Uses the app to watch content")
+Person(parent, "Parent", "Manages profiles and settings")
+
+System_Boundary(frontend, "Next.js PWA") {
+  Container(app, "App Shell", "Next.js 15 + Tailwind", "Root layout, tab navigation, theming, offline support")
+  Container(sw, "Service Worker", "Workbox", "Offline caching, background sync, update detection")
+}
+
+System_Boundary(backend, "Backend Services") {
+  Container(api, "Fastify API", "TypeScript", "Content, profiles, playlists, analytics")
+  Container(keycloak, "Keycloak", "Auth Server", "Authentication and session management")
+  ContainerDb(minio, "MinIO", "S3-compatible", "Media storage and delivery")
+  Container(search, "Meilisearch", "Search Engine", "Content discovery and filtering")
+}
+
+Rel(child, app, "Browses and watches content")
+Rel(parent, app, "Manages profiles, settings")
+Rel(app, api, "REST API calls", "HTTPS")
+Rel(app, keycloak, "Auth flows", "OIDC")
+Rel(app, minio, "Stream media", "HLS/HTTPS")
+Rel(app, search, "Search queries", "HTTPS")
+Rel(sw, api, "Background sync", "HTTPS")
+Rel(sw, minio, "Cache media segments", "HTTPS")
+
+@enduml

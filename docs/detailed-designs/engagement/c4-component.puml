@@ -1,0 +1,28 @@
+@startuml c4-component
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Engagement Feature - Component Diagram
+
+Container_Boundary(engagement, "Engagement Module") {
+    Component(ctrl, "EngagementController", "Fastify Route Handler", "Badges, progress, streaks, memory verse endpoints")
+    Component(badge, "BadgeService", "TypeScript Service", "Badge rule evaluation, award logic, duplicate prevention")
+    Component(progress, "ProgressService", "TypeScript Service", "Content completion tracking, series progress aggregation")
+    Component(verse, "MemoryVerseService", "TypeScript Service", "Daily verse selection by rotation, completion tracking")
+    Component(streak, "StreakService", "TypeScript Service", "Daily engagement streak calculation, gentle encouragement")
+}
+
+ContainerDb(db, "PostgreSQL", "Prisma ORM", "Badge, BadgeRule, ChildBadge, ChildProgress, MemoryVerse")
+
+Rel(ctrl, badge, "Awards and queries badges")
+Rel(ctrl, progress, "Tracks completion progress")
+Rel(ctrl, verse, "Fetches daily verse")
+Rel(ctrl, streak, "Calculates streaks")
+Rel(badge, progress, "Listens for completion events")
+Rel(badge, db, "Reads rules, writes awards")
+Rel(progress, db, "Reads/writes progress")
+Rel(verse, db, "Reads verses,\nwrites completions")
+Rel(streak, db, "Reads activity dates")
+
+@enduml

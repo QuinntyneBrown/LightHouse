@@ -1,0 +1,27 @@
+@startuml c4-component
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Playback Feature - Component Diagram
+
+Container_Boundary(playback, "Playback Module") {
+    Component(ctrl, "PlaybackController", "Fastify Route Handler", "Stream URL resolution, progress save/load, history endpoints")
+    Component(svc, "PlaybackService", "TypeScript Service", "HLS manifest URL generation, progress persistence via Prisma")
+    Component(playlist, "PlaylistEngine", "TypeScript Service", "Next-item resolution, playlist ordering, auto-advance logic")
+    Component(tracker, "ProgressTracker", "TypeScript Service", "Watch/listen progress save, resume point calculation")
+    Component(resolver, "StreamResolver", "TypeScript Service", "MinIO presigned URL or CDN URL resolution based on environment")
+}
+
+Container(minio, "MinIO / CDN", "S3-Compatible Storage", "HLS segments and manifests")
+ContainerDb(db, "PostgreSQL", "Prisma ORM", "PlaybackSession, WatchProgress")
+
+Rel(ctrl, svc, "Delegates playback operations")
+Rel(ctrl, playlist, "Requests next item")
+Rel(svc, resolver, "Resolves stream URLs")
+Rel(svc, tracker, "Delegates progress tracking")
+Rel(resolver, minio, "Generates presigned URLs")
+Rel(tracker, db, "Reads/writes progress")
+Rel(svc, db, "Reads/writes sessions")
+
+@enduml

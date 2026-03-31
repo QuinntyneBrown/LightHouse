@@ -1,0 +1,22 @@
+@startuml state-profile-lifecycle
+title Child Profile Lifecycle
+
+[*] --> Creating : Parent starts\nnew profile form
+
+Creating : Name, age band,\navatar selected
+Creating --> Active : Validation passes,\nprofile saved
+Creating --> [*] : Parent cancels
+
+Active : Profile visible\nin picker
+Active --> Editing : Parent taps\nedit profile
+Active --> Archived : Parent deletes\nprofile (soft-delete)
+
+Editing : Name, age band, or\navatar being changed
+Editing --> Active : Changes saved
+Editing --> Active : Changes cancelled
+
+Archived : Hidden from UI
+Archived : Data retained per\nCOPPA requirements
+Archived --> [*] : Retention period\nexpires (3 years)
+
+@enduml

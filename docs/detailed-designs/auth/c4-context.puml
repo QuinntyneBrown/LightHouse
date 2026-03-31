@@ -1,0 +1,21 @@
+@startuml c4-context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title System Context -- LightHouse Authentication
+
+Person(parent, "Parent", "Adult user who manages\nchild profiles and consent")
+Person(child, "Child", "Young user (0-9) who\nconsumes content via a profile")
+
+System(lighthouse, "LightHouse Platform", "Christian media platform\nfor children ages 0-9")
+
+System_Ext(google, "Google OAuth", "Google Identity Platform\nfor social sign-in")
+System_Ext(apple, "Apple OAuth", "Sign in with Apple\nfor social sign-in")
+System_Ext(keycloak, "Keycloak IdP", "Identity provider managing\nusers, roles, and tokens")
+
+Rel(parent, lighthouse, "Registers, logs in,\nmanages profiles")
+Rel(child, lighthouse, "Browses content\nvia child profile")
+Rel(lighthouse, google, "OAuth 2.0\nauthorization code flow")
+Rel(lighthouse, apple, "OAuth 2.0\nauthorization code flow")
+Rel(lighthouse, keycloak, "OIDC / Admin REST API")
+
+@enduml

@@ -1,0 +1,45 @@
+@startuml class-profile-domain
+title Profile Domain Model
+
+enum AgeBand {
+    SEEDLINGS
+    SPROUTS
+    EXPLORERS
+}
+
+note right of AgeBand
+    SEEDLINGS: ages 0-2
+    SPROUTS: ages 3-5
+    EXPLORERS: ages 6-9
+end note
+
+class ParentAccount {
+    +id: UUID
+    +email: string
+    +keycloakId: string
+    +pin: string
+    +children: ChildProfile[]
+}
+
+class ChildProfile {
+    +id: UUID
+    +parentId: UUID
+    +name: string
+    +ageBand: AgeBand
+    +avatarId: UUID
+    +isActive: boolean
+    +createdAt: DateTime
+}
+
+class Avatar {
+    +id: UUID
+    +name: string
+    +iconName: string
+    +gradientColors: string[]
+}
+
+ParentAccount "1" --> "0..6" ChildProfile : children
+ChildProfile "0..*" --> "1" Avatar : avatar
+ChildProfile --> AgeBand
+
+@enduml

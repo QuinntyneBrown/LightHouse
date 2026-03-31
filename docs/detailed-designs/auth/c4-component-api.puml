@@ -1,0 +1,26 @@
+@startuml c4-component-api
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Component Diagram -- Fastify API Auth Module
+
+Container_Boundary(api, "Fastify API") {
+    Component(authCtrl, "AuthController", "Fastify Route", "HTTP handlers for login,\nregister, OAuth, refresh, logout")
+    Component(authSvc, "AuthService", "Service", "Keycloak admin client,\nuser creation, token validation")
+    Component(coppaSvc, "COPPAService", "Service", "Parental consent verification,\nconsent record management")
+    Component(pinSvc, "PINService", "Service", "PIN hashing (bcrypt),\nverification, lockout")
+    Component(tokenSvc, "TokenService", "Service", "JWT issuance, refresh,\nrotation, revocation")
+}
+
+ContainerDb(db, "PostgreSQL", "Prisma ORM")
+System_Ext(keycloak, "Keycloak", "Identity Provider")
+
+Rel(authCtrl, authSvc, "Delegates auth ops")
+Rel(authCtrl, coppaSvc, "Checks consent")
+Rel(authCtrl, pinSvc, "PIN verification")
+Rel(authCtrl, tokenSvc, "Issue / refresh tokens")
+Rel(authSvc, keycloak, "Admin REST API")
+Rel(tokenSvc, db, "Session CRUD")
+Rel(coppaSvc, db, "Consent records")
+Rel(pinSvc, db, "PIN storage")
+
+@enduml

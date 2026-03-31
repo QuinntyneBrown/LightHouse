@@ -1,0 +1,41 @@
+@startuml seq-church-account
+title Church Account Lifecycle Flow
+
+actor "Church Rep" as Church
+actor "Admin" as Admin
+participant "AdminController" as API
+participant "ChurchAccountService" as Service
+database "PostgreSQL" as DB
+
+Church -> API: POST /churches/apply\n{name, contactEmail, logoUrl}
+API -> Service: createApplication(data)
+Service -> DB: insert ChurchAccount\n(status: APPLIED)
+DB --> Service: created
+Service --> API: applicationId
+API --> Church: application submitted
+
+Admin -> API: GET /admin/churches?status=APPLIED
+API -> DB: query pending applications
+DB --> API: applications list
+API --> Admin: church applications
+
+Admin -> API: POST /admin/churches/{id}/review
+API -> Service: beginReview(churchId)
+Service -> DB: update status = PENDING_APPROVAL
+API --> Admin: under review
+
+Admin -> API: POST /admin/churches/{id}/approve\n{features: ["playlists", "branding"]}
+API -> Service: approve(churchId, features)
+Service -> DB: update status = ACTIVE\nset approvedAt, features[]
+DB --> Service: approved
+Service --> API: church activated
+API --> Admin: approved
+
+note over Church
+  Church can now:
+  - Set custom branding (logo, colors)
+  - Curate playlists for congregation
+  - View engagement for their playlists
+end note
+
+@enduml

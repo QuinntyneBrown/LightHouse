@@ -1,0 +1,27 @@
+@startuml seq-email-signup
+title Email/Password Signup
+
+actor Parent as P
+participant "Next.js PWA" as PWA
+participant "Fastify API\nAuthController" as API
+participant "AuthService" as Auth
+participant "Keycloak" as KC
+database "PostgreSQL" as DB
+participant "COPPAService" as COPPA
+
+P -> PWA : Fill signup form\n(email, password)
+PWA -> API : POST /auth/register
+API -> Auth : createUser(email, password)
+Auth -> KC : POST /admin/realms/.../users
+KC --> Auth : 201 Created (keycloakId)
+Auth -> DB : INSERT Account\n(email, keycloakId, role=PARENT,\nconsentStatus=PENDING)
+Auth --> API : account created
+
+API -> COPPA : initiateConsent(accountId)
+COPPA -> DB : INSERT ConsentRecord\n(method=pending)
+COPPA --> API : consent flow URL
+
+API --> PWA : 201 { accountId,\nconsentRequired: true }
+PWA --> P : Redirect to\nconsent verification
+
+@enduml

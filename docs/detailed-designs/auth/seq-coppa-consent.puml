@@ -1,0 +1,32 @@
+@startuml seq-coppa-consent
+title COPPA Parental Consent Flow
+
+actor Parent as P
+participant "Next.js PWA" as PWA
+participant "Fastify API" as API
+participant "COPPAService" as COPPA
+database "PostgreSQL" as DB
+
+P -> PWA : Select consent method\n(email / credit card / phone)
+PWA -> API : POST /auth/consent/initiate\n{ accountId, method }
+API -> COPPA : initiateConsent(accountId, method)
+
+alt Email verification
+    COPPA -> COPPA : Generate signed\nconsent form link
+    COPPA --> P : Send consent email
+    P -> PWA : Click link, review,\nsign consent form
+    PWA -> API : POST /auth/consent/verify\n{ token, signature }
+else Credit card micro-charge
+    COPPA --> PWA : Show card form
+    P -> PWA : Enter card details
+    PWA -> API : POST /auth/consent/verify\n{ chargeAmount }
+end
+
+API -> COPPA : verifyConsent(accountId, data)
+COPPA -> DB : UPDATE ConsentRecord\nverifiedAt = now()
+COPPA -> DB : UPDATE Account\nconsentStatus = VERIFIED
+COPPA --> API : consent verified
+API --> PWA : 200 { consentVerified: true }
+PWA --> P : Child profiles unlocked
+
+@enduml

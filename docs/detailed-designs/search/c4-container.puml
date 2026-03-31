@@ -1,0 +1,24 @@
+@startuml c4-container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Search Feature - Container Diagram
+
+Person(child, "Child / Parent", "Searches for content by title, description, tags, or scripture reference")
+
+System_Boundary(lighthouse, "LightHouse Kids Platform") {
+    Container(frontend, "Next.js Frontend", "React / PWA", "Search bar with autocomplete, debounced input, result cards")
+    Container(api, "Fastify API", "TypeScript", "SearchController, FilterService, IndexSyncService")
+    ContainerDb(pg, "PostgreSQL", "Prisma ORM", "Source of truth for all content metadata")
+    Container(meili, "Meilisearch", "Search Engine", "Full-text search with typo tolerance, faceted filtering")
+}
+
+Rel(child, frontend, "Types search query")
+Rel(frontend, api, "GET /api/search", "HTTPS")
+Rel(api, meili, "Search queries", "HTTP")
+Rel(api, pg, "Index sync pipeline\n(publish/update/delete)")
+Rel(pg, api, "Content change events")
+Rel(api, meili, "Upsert/delete documents")
+
+@enduml

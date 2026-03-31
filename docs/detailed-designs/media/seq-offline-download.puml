@@ -1,0 +1,38 @@
+@startuml seq-offline-download
+title Offline Download Flow
+
+actor Parent
+participant "Next.js PWA" as App
+participant "ServiceWorker" as SW
+participant "MediaController" as API
+participant "OfflineService" as Offline
+participant "MinIO / CDN" as Storage
+
+Parent -> App: Enable offline for content
+App -> API: GET /media/{contentId}/download-manifest
+
+API -> Offline: generateManifest(contentId)
+Offline -> Offline: Resolve best quality\nfor device constraints
+Offline --> API: DownloadManifest\n{segments[], thumbnailUrl, totalSize}
+API --> App: {manifest, estimatedSize}
+
+App -> App: Confirm download\n(show size to parent)
+App -> SW: cache(manifest.segments[])
+
+loop For each HLS segment
+  SW -> Storage: GET segment file
+  Storage --> SW: segment data
+  SW -> SW: Cache.put(segment)
+end
+
+SW -> Storage: GET thumbnail
+SW -> SW: Cache.put(thumbnail)
+SW --> App: Download complete
+
+note over App, SW
+  Content now available offline.
+  Service worker intercepts fetch
+  requests and serves from cache.
+end note
+
+@enduml

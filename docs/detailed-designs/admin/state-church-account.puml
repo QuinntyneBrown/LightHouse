@@ -1,0 +1,37 @@
+@startuml state-church-account
+title Church Account — State Diagram
+
+[*] --> Applied : Church submits application
+
+Applied --> PendingApproval : Admin begins review
+
+PendingApproval --> Active : Admin approves
+PendingApproval --> Applied : Admin requests\nmore information
+
+Active --> Suspended : Policy violation\nor admin action
+Suspended --> Active : Admin reactivates
+Suspended --> Deactivated : Prolonged suspension\nor church request
+
+Active --> Deactivated : Church requests\ndeactivation
+
+Deactivated --> [*]
+
+note right of Active
+  Church has access to:
+  - Custom branding
+  - Playlist curation
+  - Engagement analytics
+end note
+
+note right of Suspended
+  All church features
+  disabled. Playlists
+  hidden from public.
+end note
+
+note right of Deactivated
+  Data retained for
+  30 days, then purged.
+end note
+
+@enduml

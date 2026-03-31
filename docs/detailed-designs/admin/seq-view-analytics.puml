@@ -1,0 +1,34 @@
+@startuml seq-view-analytics
+title Analytics Dashboard Flow
+
+actor "Admin" as Admin
+participant "AdminController" as API
+participant "AnalyticsService" as Analytics
+database "PostgreSQL" as DB
+
+Admin -> API: GET /admin/analytics/overview\n{dateFrom, dateTo}
+API -> Analytics: getOverviewMetrics(dateRange)
+
+Analytics -> DB: SELECT COUNT(*) views\nGROUP BY date
+DB --> Analytics: views per day
+
+Analytics -> DB: SELECT contentId, COUNT(*)\nORDER BY count DESC LIMIT 10
+DB --> Analytics: top 10 popular content
+
+Analytics -> DB: SELECT COUNT(DISTINCT profileId)\nGROUP BY date
+DB --> Analytics: active users per day
+
+Analytics -> DB: SELECT AVG(duration)\nFROM watch_events
+DB --> Analytics: avg engagement time
+
+Analytics --> API: {viewsByDay, popularContent,\nuserGrowth, avgEngagement}
+API --> Admin: analytics dashboard data
+
+Admin -> API: GET /admin/analytics/content/{id}\n{dateFrom, dateTo}
+API -> Analytics: getContentMetrics(contentId, dateRange)
+Analytics -> DB: aggregate events\nfor specific content
+DB --> Analytics: content-specific metrics
+Analytics --> API: {totalViews, uniqueViewers,\navgWatchTime, completionRate}
+API --> Admin: content analytics detail
+
+@enduml

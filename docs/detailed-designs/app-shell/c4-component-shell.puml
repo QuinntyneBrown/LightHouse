@@ -1,0 +1,24 @@
+@startuml c4-component-shell
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title App Shell — Component Diagram
+
+Container_Boundary(shell, "App Shell") {
+  Component(appShell, "AppShell", "React Component", "Root layout wrapping all pages with tab bar, theme, and offline indicator")
+  Component(tabBar, "BottomTabBar", "React Component", "4 tabs: Home, Browse, Playlists, Parent. 48px+ touch targets, active highlighting")
+  Component(profileSwitcher, "ProfileSwitcher", "React Component", "Modal overlay showing child profiles with avatars and names")
+  Component(themeProvider, "ThemeProvider", "React Context", "Age-band-aware theme context, injects CSS variables for colors and fonts")
+  Component(screenTime, "ScreenTimeOverlay", "React Component", "Full-screen overlay when limit reached, PIN-only dismiss")
+  Component(offline, "OfflineIndicator", "React Component", "Banner displayed when device is offline")
+  Component(swManager, "ServiceWorkerManager", "Module", "SW registration, update detection, offline caching strategy")
+}
+
+Rel(appShell, tabBar, "Renders")
+Rel(appShell, themeProvider, "Wraps children")
+Rel(appShell, offline, "Renders conditionally")
+Rel(appShell, screenTime, "Renders conditionally")
+Rel(tabBar, profileSwitcher, "Opens on avatar tap")
+Rel(themeProvider, profileSwitcher, "Theme updates on profile switch")
+Rel(appShell, swManager, "Initializes on mount")
+
+@enduml

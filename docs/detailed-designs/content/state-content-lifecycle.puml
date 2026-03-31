@@ -1,0 +1,28 @@
+@startuml state-content-lifecycle
+title Content Lifecycle States
+
+[*] --> Draft : Content created
+
+Draft : Metadata entered
+Draft : Media upload pending\nor complete
+Draft --> PendingReview : Submit for review
+
+PendingReview : Assigned to\nreview board
+PendingReview --> Approved : All reviewers\napprove
+PendingReview --> Rejected : Reviewers reject
+
+Approved : Ready for\npublication
+Approved --> Published : Admin publishes\n(indexed in Meilisearch)
+
+Published : Visible to children
+Published : Searchable
+Published --> Archived : Admin archives\n(removed from index)
+
+Rejected : Feedback provided
+Rejected --> Draft : Creator revises\nand resubmits
+
+Archived : Hidden from users
+Archived : Retained in DB
+Archived --> Published : Admin republishes
+
+@enduml

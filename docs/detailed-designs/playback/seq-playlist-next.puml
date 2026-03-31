@@ -1,0 +1,37 @@
+@startuml seq-playlist-next
+title Playlist Auto-Advance
+
+participant "Next.js Frontend" as ui
+participant "PlaybackController" as ctrl
+participant "PlaylistEngine" as playlist
+participant "PlaybackService" as svc
+participant "ProgressTracker" as tracker
+database "PostgreSQL" as db
+
+ui -> ui : Current item playback\nreaches end
+ui -> ctrl : POST /api/playback/complete\n{ sessionId, contentId }
+
+ctrl -> tracker : markCompleted(sessionId)
+tracker -> db : Update PlaybackSession\n(completed=true, endedAt=now)
+tracker -> db : Update WatchProgress\n(position=totalDuration)
+db --> tracker : confirmed
+
+ctrl -> playlist : getNext(profileId, playlistId,\ncurrentIndex)
+playlist -> db : Fetch playlist items
+db --> playlist : PlaylistItem[]
+playlist -> playlist : Resolve next item\n(skip blocked content)
+
+alt Next item exists
+    playlist --> ctrl : nextItem: PlaylistItem
+    ctrl -> svc : getStream(nextItem.contentId)
+    svc --> ctrl : ContentStream
+    ctrl --> ui : 200 { nextItem, stream }
+    ui -> ui : 5-second "Up Next" overlay
+    ui -> ui : Auto-advance to next item
+else Playlist complete
+    playlist --> ctrl : null (no more items)
+    ctrl --> ui : 200 { playlistComplete: true }
+    ui -> ui : Show "All Done!" screen\nwith encouragement
+end
+
+@enduml

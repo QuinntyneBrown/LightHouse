@@ -1,0 +1,36 @@
+@startuml seq-set-screentime
+title Configure Screen Time Limit
+
+actor "Parent" as parent
+participant "Next.js Frontend" as ui
+participant "ParentalController" as ctrl
+participant "ScreenTimeService" as svc
+database "PostgreSQL" as db
+
+parent -> ui : Opens Parent Dashboard\n(PIN already verified)
+ui -> ctrl : GET /api/parental/screentime/{profileId}
+ctrl -> svc : getRule(profileId)
+svc -> db : SELECT ScreenTimeRule
+db --> svc : rule (or null)
+svc --> ctrl : currentRule
+ctrl --> ui : 200 { dailyLimitMinutes,\nisEnabled }
+
+ui -> parent : Show slider\n(15min to 180min, or unlimited)
+
+parent -> ui : Adjusts slider to 60 minutes\nand taps Save
+ui -> ctrl : PUT /api/parental/screentime/{profileId}\n{ dailyLimitMinutes: 60,\nisEnabled: true }
+
+ctrl -> svc : upsertRule(profileId, 60, true)
+svc -> db : UPSERT ScreenTimeRule
+db --> svc : confirmed
+svc --> ctrl : updatedRule
+ctrl --> ui : 200 { dailyLimitMinutes: 60 }
+ui -> parent : "Screen time set to\n1 hour per day"
+
+note right of svc
+  Enforcement happens at playback time.
+  ScreenTimeService checks elapsed
+  minutes before allowing content to play.
+end note
+
+@enduml

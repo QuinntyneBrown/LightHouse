@@ -1,0 +1,27 @@
+@startuml state-player
+title Player State Machine
+
+[*] --> IDLE
+
+IDLE --> LOADING : Content selected
+LOADING --> PLAYING : Stream ready /\nbegin playback
+LOADING --> ERROR : Stream failed /\nshow error message
+
+PLAYING --> PAUSED : User pauses /\nsave progress
+PLAYING --> BUFFERING : Network slow /\nshow spinner
+PLAYING --> ENDED : Playback complete /\nmark completed
+PLAYING --> ERROR : Stream error /\nretry or show error
+
+PAUSED --> PLAYING : User resumes
+PAUSED --> IDLE : User navigates away /\nsave progress
+
+BUFFERING --> PLAYING : Buffer filled /\nresume playback
+BUFFERING --> ERROR : Timeout exceeded /\nshow retry option
+
+ENDED --> IDLE : Dismissed
+ENDED --> LOADING : "Up Next" auto-advance
+
+ERROR --> LOADING : User retries
+ERROR --> IDLE : User dismisses
+
+@enduml

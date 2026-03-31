@@ -1,0 +1,42 @@
+@startuml seq-content-search
+title Content Search Flow
+
+actor "User" as user
+participant "Next.js Frontend" as ui
+participant "SearchController" as ctrl
+participant "SearchService" as svc
+participant "FilterService" as filter
+participant "Meilisearch" as meili
+
+user -> ui : Types "David and Goliath"\nin search bar
+
+ui -> ui : Debounce input\n(300ms delay)
+
+ui -> ctrl : GET /api/search\n?q=David+and+Golath\n&ageBand=4-6&page=1&limit=20
+
+ctrl -> svc : search(query, filters)
+
+svc -> filter : buildFilters(\n{ ageBand: "4-6" })
+filter --> svc : filterExpression:\n"ageBands = '4-6'"
+
+svc -> meili : POST /indexes/content/search\n{ q: "David and Golath",\nfilter: "ageBands = '4-6'",\nlimit: 20, offset: 0,\nattributesToHighlight: ["title"] }
+
+note right of meili
+  Meilisearch handles:
+  - Typo tolerance ("Golath" -> "Goliath")
+  - Relevance ranking
+  - Age band filtering
+  - Facet distribution
+end note
+
+meili --> svc : { hits[], totalHits,\nprocessingTimeMs,\nfacetDistribution }
+
+svc -> svc : Transform hits to\nSearchResultItem[]\n(add thumbnailUrl, etc.)
+
+svc --> ctrl : SearchResult
+ctrl --> ui : 200 { items[],\ntotalHits: 3,\nprocessingTimeMs: 2 }
+
+ui -> ui : Render content cards\nwith highlighted matches
+ui -> user : Display search results
+
+@enduml

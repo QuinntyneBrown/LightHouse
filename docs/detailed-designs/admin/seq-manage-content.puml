@@ -1,0 +1,38 @@
+@startuml seq-manage-content
+title Content Management Flow
+
+actor "Admin" as Admin
+participant "AdminController" as API
+participant "Keycloak" as Auth
+database "PostgreSQL" as DB
+participant "Meilisearch" as Search
+
+Admin -> API: GET /admin/content\n{page, filters}
+API -> Auth: validate token + role\n(CONTENT_ADMIN | SUPER_ADMIN)
+Auth --> API: authorized
+API -> DB: query Content\n(paginated, filtered)
+DB --> API: content list
+API --> Admin: content list with status
+
+Admin -> API: PUT /admin/content/{id}\n{title, description, tags}
+API -> Auth: validate role
+Auth --> API: authorized
+API -> DB: update Content metadata
+DB --> API: updated record
+API --> Admin: success
+
+alt Publish
+  Admin -> API: POST /admin/content/{id}/publish
+  API -> DB: set status = PUBLISHED
+  API -> Search: upsert document to index
+  Search --> API: indexed
+  API --> Admin: published
+else Archive
+  Admin -> API: POST /admin/content/{id}/archive
+  API -> DB: set status = ARCHIVED
+  API -> Search: remove document from index
+  Search --> API: removed
+  API --> Admin: archived
+end
+
+@enduml

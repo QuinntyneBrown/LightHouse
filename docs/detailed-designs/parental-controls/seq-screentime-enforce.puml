@@ -1,0 +1,58 @@
+@startuml seq-screentime-enforce
+title Screen Time Enforcement During Playback
+
+actor "Child" as child
+participant "Next.js Frontend" as ui
+participant "PlaybackController" as play
+participant "ScreenTimeService" as svc
+database "PostgreSQL" as db
+
+child -> ui : Taps content to play
+ui -> play : GET /api/playback/stream/{contentId}
+
+play -> svc : checkScreenTime(profileId)
+svc -> db : Fetch ScreenTimeRule\nand today's ScreenTimeSession
+db --> svc : rule (60min limit),\nsession (45min elapsed)
+
+svc --> play : { allowed: true,\nremainingMinutes: 15 }
+play --> ui : 200 { stream, remainingMinutes: 15 }
+ui -> ui : Start playback,\nset 10-min warning timer
+
+== 10 minutes later (5 min remaining) ==
+
+ui -> svc : GET /api/parental/screentime/remaining\n?profileId={id}
+svc -> db : Check elapsed today
+db --> svc : 55min elapsed
+svc --> ui : { remainingMinutes: 5 }
+
+ui -> ui : Show gentle warning overlay\n"5 minutes of\nscreen time left!"
+
+== 5 minutes later (limit reached) ==
+
+ui -> svc : GET /api/parental/screentime/remaining
+svc --> ui : { remainingMinutes: 0 }
+
+ui -> ui : Pause playback
+ui -> ui : Show full-screen overlay\n"Time for a break!\nAsk a parent to continue."
+
+child -> ui : Taps overlay\n(cannot dismiss)
+
+note right of ui
+  The overlay has no close button.
+  Only entering the parent PIN
+  can dismiss it and optionally
+  extend the session.
+end note
+
+actor "Parent" as parent
+parent -> ui : Enters PIN on overlay
+ui -> play : POST /api/auth/pin/verify
+play --> ui : 200 { valid: true }
+ui -> ui : Show extend options:\n+15min, +30min, Unlimited today
+parent -> ui : Selects +30min
+ui -> svc : POST /api/parental/screentime/extend\n{ profileId, extraMinutes: 30 }
+svc -> db : Update ScreenTimeSession
+svc --> ui : 200 OK
+ui -> ui : Resume playback,\nreset timers
+
+@enduml

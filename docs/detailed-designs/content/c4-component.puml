@@ -1,0 +1,27 @@
+@startuml c4-component
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Component Diagram -- Content API Module
+
+Container_Boundary(api, "Fastify API") {
+    Component(contentCtrl, "ContentController", "Fastify Route", "CRUD endpoints, featured,\ncategory listing, upload URLs")
+    Component(contentSvc, "ContentService", "Service", "Business logic, filtering,\nfeatured curation, lifecycle")
+    Component(taggingSvc, "TaggingService", "Service", "Category, age band,\nscripture ref tagging")
+    Component(uploadSvc, "UploadService", "Service", "Presigned URL generation,\nupload confirmation")
+    Component(indexSvc, "IndexingService", "Service", "Meilisearch sync on\npublish and update")
+}
+
+ContainerDb(db, "PostgreSQL", "Prisma ORM")
+System_Ext(minio, "MinIO", "Object storage")
+System_Ext(meili, "Meilisearch", "Search")
+
+Rel(contentCtrl, contentSvc, "Delegates")
+Rel(contentCtrl, uploadSvc, "Upload ops")
+Rel(contentSvc, taggingSvc, "Tag management")
+Rel(contentSvc, indexSvc, "Trigger indexing")
+Rel(contentSvc, db, "Prisma")
+Rel(taggingSvc, db, "Prisma")
+Rel(uploadSvc, minio, "S3 API")
+Rel(indexSvc, meili, "REST API")
+
+@enduml

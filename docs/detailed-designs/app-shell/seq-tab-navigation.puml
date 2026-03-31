@@ -1,0 +1,25 @@
+@startuml seq-tab-navigation
+title Tab Navigation Flow
+
+actor Child
+participant "BottomTabBar" as TabBar
+participant "Next.js Router" as Router
+participant "ThemeProvider" as Theme
+participant "Fastify API" as API
+participant "Page Component" as Page
+
+Child -> TabBar: Taps tab (e.g., Browse)
+TabBar -> TabBar: Update activeTab state\nhighlight selected tab
+TabBar -> Router: router.push(tab.route)
+
+Router -> Theme: Read current AgeBandTheme
+Theme --> Router: {ageBand, colors, fontSizes}
+
+Router -> API: GET /content?ageBand={band}\n&category={tab context}
+API --> Router: filtered content list
+
+Router -> Page: Render page with data
+Page -> Page: Apply theme CSS variables\n(colors, typography)
+Page --> Child: Age-appropriate themed UI
+
+@enduml

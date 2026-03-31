@@ -1,0 +1,26 @@
+@startuml state-review-lifecycle
+title Review Request Lifecycle
+
+[*] --> Submitted : Content submitted\nfor review
+
+Submitted : Awaiting reviewer\nassignment
+Submitted --> InReview : Reviewers assigned\nvia rotation
+
+InReview : Reviewers evaluating\nagainst checklist
+InReview --> Approved : All reviewers approve\n(consensus reached)
+InReview --> Rejected : Any reviewer rejects
+InReview --> RevisionRequested : Reviewer requests\nchanges
+
+RevisionRequested : Creator notified\nof required changes
+RevisionRequested --> Resubmitted : Creator updates\nand resubmits
+
+Resubmitted : Previous decisions\ncleared
+Resubmitted --> InReview : New reviewers\nassigned
+
+Approved : Content ready\nfor publication
+Approved --> [*]
+
+Rejected : Feedback provided\nto creator
+Rejected --> [*]
+
+@enduml

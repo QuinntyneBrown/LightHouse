@@ -1,0 +1,56 @@
+@startuml class-admin-domain
+title Admin Domain — Class Diagram
+
+enum AdminRole {
+  SUPER_ADMIN
+  CONTENT_ADMIN
+  REVIEWER
+}
+
+enum ChurchStatus {
+  APPLIED
+  PENDING_APPROVAL
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+}
+
+class AdminUser {
+  +id: string
+  +accountId: string
+  +role: AdminRole
+}
+
+class ChurchAccount {
+  +id: string
+  +name: string
+  +logoUrl: string
+  +contactEmail: string
+  +status: ChurchStatus
+  +approvedAt: DateTime | null
+  +features: string[]
+}
+
+class AnalyticsEvent {
+  +id: string
+  +type: string
+  +contentId: string | null
+  +profileId: string | null
+  +metadata: JSON
+  +createdAt: DateTime
+}
+
+class SystemConfig {
+  +id: string
+  +key: string
+  +value: JSON
+  +updatedAt: DateTime
+  +updatedBy: string
+}
+
+AdminUser --> AdminRole : has role
+ChurchAccount --> ChurchStatus : current status
+AdminUser "1" --> "*" ChurchAccount : approves
+AdminUser "1" --> "*" SystemConfig : updates
+
+@enduml

@@ -1,0 +1,38 @@
+@startuml seq-start-video
+title Start Video Playback
+
+actor "Child" as child
+participant "Next.js Frontend" as ui
+participant "PlaybackController" as ctrl
+participant "PlaybackService" as svc
+participant "StreamResolver" as resolver
+participant "MinIO / CDN" as minio
+database "PostgreSQL" as db
+
+child -> ui : Taps content card
+ui -> ctrl : GET /api/playback/stream/{contentId}
+ctrl -> svc : getStream(contentId, profileId)
+
+svc -> db : Check WatchProgress\nfor resume point
+db --> svc : position (or null)
+
+svc -> resolver : resolveStreamUrl(contentId)
+resolver -> minio : Generate presigned\nHLS manifest URL
+minio --> resolver : Signed manifest URL
+resolver --> svc : ContentStream
+
+svc -> db : Create PlaybackSession
+db --> svc : session
+
+svc --> ctrl : { stream, resumePosition }
+ctrl --> ui : 200 { hlsManifestUrl,\nqualities[], resumeAt }
+
+ui -> ui : Initialize HLS.js player\nwith manifest URL
+ui -> ui : Seek to resumeAt\nif applicable
+ui -> child : Video begins playing
+
+ui -> ctrl : POST /api/playback/progress\n(periodic, every 15s)
+ctrl -> svc : saveProgress(position)
+svc -> db : Upsert WatchProgress
+
+@enduml

@@ -1,0 +1,26 @@
+@startuml c4-component
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Admin Module — Component Diagram
+
+Container_Boundary(admin, "Admin Module") {
+  Component(ctrl, "AdminController", "Fastify Routes", "Analytics overview, content management, church CRUD, reviewer CRUD, system config")
+  Component(analytics, "AnalyticsService", "Service", "Event aggregation, metric calculation, time-series queries, popular content ranking")
+  Component(church, "ChurchAccountService", "Service", "Church registration, approval workflow, playlist curation delegation")
+  Component(reviewer, "ReviewerService", "Service", "Reviewer CRUD, board composition validation")
+  Component(config, "SystemConfigService", "Service", "App-wide settings: featured content, memory verse rotation, etc.")
+}
+
+ContainerDb(pg, "PostgreSQL", "AdminUser, ChurchAccount, AnalyticsEvent, SystemConfig")
+Container_Ext(keycloak, "Keycloak", "Role-based access control")
+Container_Ext(search, "Meilisearch", "Content search index")
+
+Rel(ctrl, analytics, "Queries metrics")
+Rel(ctrl, church, "Manages church accounts")
+Rel(ctrl, reviewer, "Manages reviewers")
+Rel(ctrl, config, "Reads/writes config")
+Rel(ctrl, pg, "Persists all admin data")
+Rel(ctrl, keycloak, "Validates admin roles")
+Rel(ctrl, search, "Updates index on publish/archive")
+
+@enduml

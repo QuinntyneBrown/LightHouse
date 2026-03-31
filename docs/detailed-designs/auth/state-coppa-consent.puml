@@ -1,0 +1,22 @@
+@startuml state-coppa-consent
+title COPPA Consent State Machine
+
+[*] --> PendingConsent : Parent account created
+
+PendingConsent : Consent not yet provided
+PendingConsent : Child profiles locked
+PendingConsent --> ConsentSubmitted : Parent selects\nverification method
+
+ConsentSubmitted : Awaiting verification
+ConsentSubmitted --> ConsentVerified : Verification\nsuccessful
+ConsentSubmitted --> PendingConsent : Verification\nfailed / expired
+
+ConsentVerified : Child profiles unlocked
+ConsentVerified : Consent record stored
+ConsentVerified --> ConsentRevoked : Parent revokes\nconsent
+
+ConsentRevoked : Child profiles deactivated
+ConsentRevoked : Data deletion scheduled
+ConsentRevoked --> PendingConsent : Parent re-initiates\nconsent
+
+@enduml

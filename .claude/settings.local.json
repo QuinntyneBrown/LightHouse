@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmd.exe //c yolo.bat 2>&1)",
+      "Bash(cmd.exe //c \"C:/projects/LightHouse/yolo.bat\" 2>&1)",
+      "Bash(dotnet tool:*)",
+      "Bash(dotnet pack:*)",
+      "Bash(dotnet build:*)"
+    ]
+  }
+}
