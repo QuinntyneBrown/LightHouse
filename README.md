@@ -1,100 +1,154 @@
 # LightHouse
 
-LightHouse Kids is a docs-first blueprint for a self-hostable Christian media platform for churches and families. The planned product combines a child-friendly PWA, parent controls, curated media playback, and an admin/content pipeline designed to stay affordable to operate.
+LightHouse Kids is a self-hostable children's media platform for churches and families. The product combines a child-friendly PWA, parent-controlled profiles, curated playback, and a content pipeline designed to stay affordable to run.
 
-At the moment, this repository is primarily architecture, UX, and delivery planning. It does not yet contain the application source code for the frontend, backend, or infrastructure automation described in the design documents.
+This repository is no longer docs-only. It now contains an early pnpm + Turborepo workspace with frontend, backend, shared types, database schema, Playwright acceptance tests, and the original product and architecture documentation.
 
-## Product Goals
+## Status
 
-- Deliver a safe, ad-free experience for children with age-appropriate content.
-- Give parents clear control over profiles, screen time, playback history, and blocked content.
-- Support churches and small teams with a stack that is practical to self-host.
-- Start simple and low-cost, then scale incrementally as adoption grows.
+The codebase is in early implementation.
 
-## Planned Platform
+- `apps/web` contains a real Next.js 15 app scaffold, shared UI components, hooks, and theme primitives.
+- `apps/api` contains Fastify module structure, schemas, controllers, and config, but runtime bootstrapping is still incomplete.
+- `packages/db` contains the Prisma schema for the core domain model.
+- `packages/shared` contains shared TypeScript types and constants.
+- `tests/e2e` contains Playwright page objects and feature-level specs that act as executable acceptance criteria.
 
-| Layer | Planned Technology |
+If you are looking for a finished local setup, treat this repository as an active scaffold rather than a fully wired application.
+
+## Stack
+
+| Layer | Technology |
 | --- | --- |
-| Frontend | Next.js 15 PWA |
+| Monorepo | pnpm workspace + Turborepo |
+| Frontend | Next.js 15 + React 19 + Tailwind CSS 4 |
 | API | Fastify + TypeScript |
-| Database | PostgreSQL |
-| ORM | Prisma |
-| Authentication | Keycloak |
+| Database | PostgreSQL + Prisma |
+| Auth | Keycloak |
 | Object Storage | MinIO |
 | Search | Meilisearch |
-| CDN / Edge | Cloudflare |
-| Local Dev / Deployment | Docker Compose |
+| E2E Testing | Playwright |
+| Local Infra | Docker Compose |
 
-## Current Repository Contents
+## Workspace Layout
 
 ```text
 .
+|-- apps/
+|   |-- web/                # Next.js PWA scaffold
+|   `-- api/                # Fastify API modules and middleware
+|-- packages/
+|   |-- db/                 # Prisma schema and generated client package
+|   `-- shared/             # Shared types and constants
+|-- tests/
+|   `-- e2e/                # Playwright specs and page objects
 |-- docs/
-|   |-- specs/                 # High-level and detailed product requirements
-|   |-- detailed-designs/      # Module-level overviews, diagrams, flows, and state models
-|   |-- images/                # Generated design/reference images
-|   |-- hosting-costs.md       # Environment and cost planning
-|   `-- ui-design.pen          # UI design source file
-|-- plantuml.jar               # Local PlantUML renderer used for diagram generation
-`-- .gitignore
+|   |-- specs/              # Product requirements
+|   |-- detailed-designs/   # Feature-level architecture and flows
+|   |-- solution-architecture.md
+|   `-- ui-design.pen
+|-- docker-compose.yml      # Postgres, Keycloak, MinIO, Meilisearch
+|-- turbo.json              # Task orchestration
+|-- pnpm-workspace.yaml
+|-- package.json
+`-- plantuml.jar
 ```
 
-## Documentation Map
+## Getting Started
 
-- [`docs/specs/L1.md`](docs/specs/L1.md): High-level product requirements.
-- [`docs/specs/L2.md`](docs/specs/L2.md): Detailed UX and feature requirements.
-- [`docs/detailed-designs/app-shell/overview.md`](docs/detailed-designs/app-shell/overview.md): PWA shell, navigation, theming, offline behavior.
-- [`docs/detailed-designs/auth/overview.md`](docs/detailed-designs/auth/overview.md): Authentication, OAuth, sessions, COPPA flow.
-- [`docs/detailed-designs/profiles/overview.md`](docs/detailed-designs/profiles/overview.md): Parent accounts, child profiles, avatar selection, active profile switching.
-- [`docs/detailed-designs/content/overview.md`](docs/detailed-designs/content/overview.md): Content lifecycle, taxonomy, upload and indexing model.
-- [`docs/detailed-designs/media/overview.md`](docs/detailed-designs/media/overview.md): MinIO storage, transcoding pipeline, streaming and offline downloads.
-- [`docs/detailed-designs/playback/overview.md`](docs/detailed-designs/playback/overview.md): Video/audio playback and playlist progression.
-- [`docs/detailed-designs/search/overview.md`](docs/detailed-designs/search/overview.md): Search architecture and Meilisearch sync behavior.
-- [`docs/detailed-designs/parental-controls/overview.md`](docs/detailed-designs/parental-controls/overview.md): Screen time, PIN checks, blocking, history.
-- [`docs/detailed-designs/engagement/overview.md`](docs/detailed-designs/engagement/overview.md): Badges, progress, streaks, memory verses.
-- [`docs/detailed-designs/content-review/overview.md`](docs/detailed-designs/content-review/overview.md): Review workflows and moderation model.
-- [`docs/detailed-designs/admin/overview.md`](docs/detailed-designs/admin/overview.md): Platform admin operations and analytics.
-- [`docs/hosting-costs.md`](docs/hosting-costs.md): Development, staging, and production hosting strategy.
-- [`docs/ui-design.pen`](docs/ui-design.pen): Editable UI design source.
+### Prerequisites
 
-## Key Functional Areas
+- Node.js 22
+- pnpm 9
+- Docker Desktop or Docker Engine
+- Java, if you want to regenerate PlantUML diagrams
 
-- Child-facing home, browse, playlists, and playback flows.
-- Parent onboarding, PIN protection, and profile management.
-- Screen time rules, viewing history, and content blocking.
-- Content upload, review, publish, search, and media delivery.
-- Offline-friendly PWA behavior for playback and downloads.
+### Install Dependencies
+
+```powershell
+pnpm install
+```
+
+### Start Infrastructure
+
+```powershell
+docker compose up -d
+```
+
+This starts:
+
+| Service | URL / Port |
+| --- | --- |
+| PostgreSQL | `localhost:5432` |
+| Keycloak | `http://localhost:8080` |
+| MinIO API | `http://localhost:9000` |
+| MinIO Console | `http://localhost:9001` |
+| Meilisearch | `http://localhost:7700` |
+
+### Run What Exists Today
+
+Frontend scaffold:
+
+```powershell
+pnpm --filter web dev
+```
+
+Workspace commands:
+
+```powershell
+pnpm dev
+pnpm build
+pnpm lint
+pnpm test
+pnpm test:e2e
+```
+
+Database package commands:
+
+```powershell
+pnpm --filter db generate
+pnpm --filter db migrate
+pnpm --filter db studio
+```
+
+## Important Notes
+
+- The root workspace is still under construction. Some package scripts describe the intended final workflow, but not every runtime path is fully wired yet.
+- The API package currently has module structure and configuration, but it does not yet have a complete server bootstrap entrypoint.
+- There is no committed `.env.example` yet, so environment setup is still implicit in the current source files and Docker defaults.
+- Playwright coverage is ahead of implementation in several areas. Treat the tests as target behavior as much as current verification.
+
+## What Is In The Repo Today
+
+- Next.js app shell metadata, global styling, components, hooks, and content/playback/profile UI scaffolding.
+- Fastify controllers, routes, schemas, middleware, plugin stubs, and utility helpers for core modules such as auth, content, profiles, and content review.
+- A large Prisma schema covering accounts, child profiles, content, playlists, review flows, playback, parental controls, engagement, media, church/admin entities, and analytics.
+- Shared domain types and constants for auth, content, media, search, playback, parental controls, and admin flows.
+- End-to-end specs for onboarding, navigation, home screen, browsing, playback, parental controls, and profile management.
+
+## Key Documentation
+
+- [`docs/solution-architecture.md`](docs/solution-architecture.md): Monorepo and service-level architecture.
+- [`docs/specs/L1.md`](docs/specs/L1.md): High-level requirements.
+- [`docs/specs/L2.md`](docs/specs/L2.md): Detailed feature requirements.
+- [`docs/detailed-designs/app-shell/overview.md`](docs/detailed-designs/app-shell/overview.md): Shell, navigation, theming, and offline behavior.
+- [`docs/detailed-designs/auth/overview.md`](docs/detailed-designs/auth/overview.md): Authentication and parental consent.
+- [`docs/detailed-designs/content/overview.md`](docs/detailed-designs/content/overview.md): Content lifecycle and taxonomy.
+- [`docs/detailed-designs/media/overview.md`](docs/detailed-designs/media/overview.md): Media storage, transcoding, and delivery.
+- [`docs/detailed-designs/search/overview.md`](docs/detailed-designs/search/overview.md): Search architecture and indexing.
+- [`docs/hosting-costs.md`](docs/hosting-costs.md): Cost and hosting strategy.
 
 ## Working With Diagrams
 
-PlantUML source files live under `docs/detailed-designs/**`. Generated PNGs are already committed alongside them.
+PlantUML source files live under `docs/detailed-designs/**`. Generated PNGs are committed alongside the source files.
 
-To regenerate all diagrams on Windows PowerShell:
+To regenerate diagrams on Windows PowerShell:
 
 ```powershell
 Get-ChildItem .\docs\detailed-designs -Recurse -Filter *.puml |
   ForEach-Object { java -jar .\plantuml.jar $_.FullName }
 ```
 
-Requirements:
+## Direction
 
-- Java installed and available on `PATH`
-- `plantuml.jar` present in the repository root
-
-## Project Status
-
-This repository is currently in planning and design. The implementation work implied by the architecture docs has not been scaffolded yet.
-
-When source code is added, this README should be expanded with:
-
-- local development setup
-- Docker Compose commands
-- environment variable reference
-- test and lint workflows
-- deployment instructions
-
-## Notes
-
-- The documentation assumes a mobile-first, child-friendly UX with large touch targets and age-band-aware theming.
-- The hosting plan intentionally favors self-hosting and low-cost infrastructure.
-- The design artifacts currently represent the best source of truth for scope and intended system boundaries.
+The repository is moving from architecture-first planning into implementation. The current source tree should be read as a scaffold aligned to the design docs, with some packages already concrete and others still being wired into a runnable system.
