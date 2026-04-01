@@ -4,31 +4,20 @@ LightHouse Kids is a self-hostable children's media platform for churches and fa
 
 This repository contains both the design documentation and the active implementation workspace. The codebase is organized as a pnpm + Turborepo monorepo with a Next.js frontend, a Fastify API, shared TypeScript packages, Prisma schema and seed data, and Playwright acceptance tests.
 
-## Current State
-
-The project is in active implementation, not just planning.
-
-- `apps/web` contains a real Next.js 15 app scaffold with auth, child, and parent route groups.
-- `apps/api` now has a bootstrapped Fastify server and module routes for the major product domains.
-- `packages/db` contains the Prisma schema and a seed script with sample content and reference data.
-- `packages/shared` contains shared domain types and constants.
-- `tests/e2e` contains Playwright page objects and specs that double as acceptance criteria.
-
-The repo is still early enough that some defaults are not fully harmonized yet, especially around local environment variables and cross-package startup.
-
 ## Stack
 
 | Layer | Technology |
 | --- | --- |
-| Monorepo | pnpm workspace + Turborepo |
+| Monorepo | pnpm 9 workspace + Turborepo 2.3 |
 | Frontend | Next.js 15 + React 19 + Tailwind CSS 4 |
-| API | Fastify + TypeScript |
-| Database | PostgreSQL + Prisma |
-| Auth | Keycloak |
+| API | Fastify 5 + TypeScript + Zod |
+| Database | PostgreSQL 16 + Prisma 6 |
+| Auth | Keycloak 26 |
 | Object Storage | MinIO |
-| Search | Meilisearch |
+| Search | Meilisearch v1.12 |
 | E2E Testing | Playwright |
 | Local Infra | Docker Compose |
+| Runtime | Node.js 22 |
 
 ## Repository Layout
 
@@ -43,9 +32,10 @@ The repo is still early enough that some defaults are not fully harmonized yet, 
 |-- tests/
 |   `-- e2e/                # Playwright specs and page objects
 |-- docs/
-|   |-- specs/
-|   |-- detailed-designs/
+|   |-- specs/              # L1 and L2 requirements
+|   |-- detailed-designs/   # 11 domain design documents with PlantUML diagrams
 |   |-- solution-architecture.md
+|   |-- hosting-costs.md
 |   `-- ui-design.pen
 |-- docker-compose.yml
 |-- turbo.json
@@ -54,44 +44,78 @@ The repo is still early enough that some defaults are not fully harmonized yet, 
 `-- plantuml.jar
 ```
 
-## Current App Surface
+## App Surface
 
 ### Web
 
-- Auth routes under `apps/web/src/app/(auth)`
-- Child-facing routes under `apps/web/src/app/(child)`
-- Parent-facing routes under `apps/web/src/app/(parent)`
-- Shared UI, playback, profile, content, search, and parental-control components under `apps/web/src/components`
+**Route groups** under `apps/web/src/app`:
+
+| Group | Routes |
+| --- | --- |
+| `(auth)` | login, signup, consent |
+| `(child)` | home, browse/[category], play/[id], playlists/[id], search |
+| `(parent)` | dashboard, profiles (new, [id]/edit), content-blocking, screen-time, history |
+| Root | landing page, pin-setup |
+
+**Components** under `apps/web/src/components`:
+
+- `auth/` -- LoginForm, SignupForm, OAuthButtons, PINEntry, PINSetup
+- `content/` -- ContentCard, ContentCarousel, ContentGrid, CategoryButton, HeroBanner, PlaylistCard, AgeBadge
+- `engagement/` -- BadgeDisplay, MemoryVerse
+- `parent/` -- ChildSummaryCard, ContentBlockToggle, PINGate, ScreenTimeSlider, ViewHistoryList
+- `playback/` -- AudioPlayer, VideoPlayer, PlaylistQueue
+- `profile/` -- AvatarPicker, AgeBandSelector, ProfileCard, ProfileCreation
+- `search/` -- SearchInput, SearchResults
+- `shell/` -- AppShell, BottomTabBar, ProfileSwitcher, ScreenTimeOverlay, OfflineIndicator
+- `ui/` -- Button, Input, Modal, Card, Badge, Toast, Skeleton
+
+**Hooks**: useAuth, useOffline, usePlayer, useProfile, useScreenTime, useSearch
+
+**Lib**: api-client, constants, theme
 
 ### API
 
-Current Fastify modules under `apps/api/src/modules`:
+Fastify modules under `apps/api/src/modules`, each with controller, routes, schema, and service files:
 
-- `auth`
-- `profiles`
-- `content`
-- `content-review`
-- `playback`
-- `parental-controls`
-- `engagement`
-- `search`
-- `media`
-- `admin`
+- `auth` -- `profiles` -- `content` -- `content-review` -- `playback`
+- `parental-controls` -- `engagement` -- `search` -- `media` -- `admin`
 
-### Data and Shared Packages
+Supporting infrastructure:
 
-- `packages/db/prisma/schema.prisma` models accounts, child profiles, content, playlists, review flows, playback, parental controls, engagement, media, admin entities, and analytics.
-- `packages/db/prisma/seed.ts` seeds categories, avatars, sample content, playlists, memory verses, badges, and a sample admin/account record.
-- `packages/shared/src` exports shared domain types and constants used across the workspace.
+- `middleware/` -- authenticate, authorize, screen-time-check, validate-pin
+- `plugins/` -- auth, cors, swagger
+- `utils/` -- errors, logger, pagination
+
+### Database
+
+`packages/db/prisma/schema.prisma` models accounts, child profiles, content, playlists, review flows, playback, parental controls, engagement, media, admin entities, and analytics.
+
+`packages/db/prisma/seed.ts` seeds default categories, avatar options, sample published content, system playlists, memory verses, badge definitions, and a sample admin account for `admin@lighthouse.kids`.
+
+### Shared
+
+`packages/shared/src` exports:
+
+- **Types**: auth, content, profile, playback, parental, engagement, search, media, admin
+- **Constants**: age-bands, categories, roles
+
+### E2E Tests
+
+Playwright specs under `tests/e2e/specs`:
+
+- browsing, home-screen, navigation, onboarding
+- parental-controls, playback, profile-management
+
+22 page objects under `tests/e2e/pages` covering the full app surface.
 
 ## Local Development
 
 ### Prerequisites
 
-- Node.js 22
+- Node.js 22 (see `.nvmrc`)
 - pnpm 9
 - Docker Desktop or Docker Engine
-- Java, if you want to regenerate PlantUML diagrams
+- Java (optional, for regenerating PlantUML diagrams)
 
 ### 1. Install Dependencies
 
@@ -117,7 +141,7 @@ This starts:
 
 ### 3. Set Local Environment Variables
 
-There is no committed `.env.example` yet, and the current package defaults do not all line up with `docker-compose.yml`. For local development today, use values like these:
+There is no committed `.env.example` yet. For local development, use values like these:
 
 ```powershell
 $env:DATABASE_URL="postgresql://lighthouse:lighthouse_dev@localhost:5432/lighthouse"
@@ -129,8 +153,6 @@ $env:MEILISEARCH_API_KEY="lighthouse_dev_key"
 $env:NEXT_PUBLIC_API_URL="http://localhost:8000"
 ```
 
-These align the API and web app with the current Docker services and avoid the default port conflict between the API and Next.js.
-
 ### 4. Prepare the Database
 
 ```powershell
@@ -141,15 +163,8 @@ pnpm --filter db seed
 
 ### 5. Run the Apps
 
-API:
-
 ```powershell
 pnpm --filter api dev
-```
-
-Web:
-
-```powershell
 pnpm --filter web dev
 ```
 
@@ -163,41 +178,38 @@ Expected local URLs:
 ## Useful Commands
 
 ```powershell
-pnpm build
-pnpm lint
-pnpm test
-pnpm test:e2e
-pnpm --filter e2e test:ui
-pnpm --filter db studio
+pnpm build              # build all packages
+pnpm lint               # lint all packages
+pnpm test               # run unit tests
+pnpm test:e2e           # run Playwright specs headless
+pnpm --filter e2e test:ui   # run Playwright specs with UI
+pnpm --filter db studio     # open Prisma Studio
 ```
 
-`pnpm dev` exists at the workspace root, but until env handling is unified it is safer to run the API and web packages explicitly.
+## Documentation
 
-## Seed Data
+- [`docs/solution-architecture.md`](docs/solution-architecture.md) -- Monorepo and service-level architecture
+- [`docs/hosting-costs.md`](docs/hosting-costs.md) -- Cost and hosting strategy
+- [`docs/specs/L1.md`](docs/specs/L1.md) -- High-level requirements
+- [`docs/specs/L2.md`](docs/specs/L2.md) -- Detailed feature requirements
 
-The Prisma seed script currently creates:
+Detailed designs under `docs/detailed-designs/`:
 
-- default content categories
-- avatar options
-- sample published content
-- system playlists
-- memory verses
-- badge definitions
-- a sample admin user record and matching account record for `admin@lighthouse.kids`
+| Domain | Path |
+| --- | --- |
+| Admin | [`admin/overview.md`](docs/detailed-designs/admin/overview.md) |
+| App Shell | [`app-shell/overview.md`](docs/detailed-designs/app-shell/overview.md) |
+| Auth | [`auth/overview.md`](docs/detailed-designs/auth/overview.md) |
+| Content | [`content/overview.md`](docs/detailed-designs/content/overview.md) |
+| Content Review | [`content-review/overview.md`](docs/detailed-designs/content-review/overview.md) |
+| Engagement | [`engagement/overview.md`](docs/detailed-designs/engagement/overview.md) |
+| Media | [`media/overview.md`](docs/detailed-designs/media/overview.md) |
+| Parental Controls | [`parental-controls/overview.md`](docs/detailed-designs/parental-controls/overview.md) |
+| Playback | [`playback/overview.md`](docs/detailed-designs/playback/overview.md) |
+| Profiles | [`profiles/overview.md`](docs/detailed-designs/profiles/overview.md) |
+| Search | [`search/overview.md`](docs/detailed-designs/search/overview.md) |
 
-The seed data is useful for UI and API development, but it is not a full authentication bootstrap by itself.
-
-## Key Documentation
-
-- [`docs/solution-architecture.md`](docs/solution-architecture.md): Monorepo and service-level architecture.
-- [`docs/specs/L1.md`](docs/specs/L1.md): High-level requirements.
-- [`docs/specs/L2.md`](docs/specs/L2.md): Detailed feature requirements.
-- [`docs/detailed-designs/app-shell/overview.md`](docs/detailed-designs/app-shell/overview.md): Shell, navigation, theming, and offline behavior.
-- [`docs/detailed-designs/auth/overview.md`](docs/detailed-designs/auth/overview.md): Authentication and parental consent.
-- [`docs/detailed-designs/content/overview.md`](docs/detailed-designs/content/overview.md): Content lifecycle and taxonomy.
-- [`docs/detailed-designs/media/overview.md`](docs/detailed-designs/media/overview.md): Media storage, transcoding, and delivery.
-- [`docs/detailed-designs/search/overview.md`](docs/detailed-designs/search/overview.md): Search architecture and indexing.
-- [`docs/hosting-costs.md`](docs/hosting-costs.md): Cost and hosting strategy.
+Each detailed design includes C4 diagrams, class diagrams, sequence diagrams, and state diagrams as PlantUML sources with committed PNGs.
 
 ## Working With Diagrams
 
@@ -209,9 +221,3 @@ To regenerate diagrams on Windows PowerShell:
 Get-ChildItem .\docs\detailed-designs -Recurse -Filter *.puml |
   ForEach-Object { java -jar .\plantuml.jar $_.FullName }
 ```
-
-## Notes
-
-- The design documents are still the best source of truth for intended scope and architecture.
-- The implementation now covers more of the planned surface area, but some modules are still scaffold-first rather than fully integrated.
-- A committed environment template would be a useful next cleanup step once the local configuration settles.
