@@ -9,6 +9,7 @@ interface PlaylistCardProps {
   icon: string;
   itemCount: number;
   gradient?: string;
+  description?: string;
 }
 
 export default function PlaylistCard({ id, title, icon, itemCount, gradient = "from-accent-blue to-accent-purple" }: PlaylistCardProps) {

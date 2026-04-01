@@ -19,11 +19,11 @@ export default function ConsentPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <span className="text-4xl">🛡️</span>
-          <h1 className="text-3xl text-accent-blue mt-3 mb-1">Parental Consent</h1>
-          <p className="text-foreground-muted text-sm">COPPA Compliance</p>
+          <h1 data-testid="consent-title" className="text-3xl text-accent-blue mt-3 mb-1">Parental Consent</h1>
+          <p data-testid="consent-subtitle" className="text-foreground-muted text-sm">COPPA Compliance</p>
         </div>
 
-        <div className="bg-surface-card rounded-xl border border-border-subtle p-4 mb-6 text-sm text-foreground-secondary leading-relaxed">
+        <div data-testid="consent-text" className="bg-surface-card rounded-xl border border-border-subtle p-4 mb-6 text-sm text-foreground-secondary leading-relaxed">
           <p className="mb-3">
             LightHouse Kids is designed for children under 13. As required by the Children&apos;s Online Privacy Protection Act (COPPA), we need your consent as a parent or guardian.
           </p>
@@ -35,7 +35,7 @@ export default function ConsentPage() {
           </p>
         </div>
 
-        <label className="flex items-start gap-3 mb-6 cursor-pointer">
+        <label data-testid="consent-checkbox" className="flex items-start gap-3 mb-6 cursor-pointer">
           <input
             type="checkbox"
             checked={agreed}
@@ -47,7 +47,7 @@ export default function ConsentPage() {
           </span>
         </label>
 
-        <Button fullWidth size="lg" onClick={handleContinue} disabled={!agreed}>
+        <Button fullWidth size="lg" onClick={handleContinue} disabled={!agreed} data-testid="consent-continue-button">
           Continue
         </Button>
       </div>

@@ -49,8 +49,8 @@ export const MOCK_CONTENT = [
 ];
 
 export const MOCK_PLAYLISTS = [
-  { id: "1", title: "Morning Worship", icon: "☀️", itemCount: 8, gradient: "from-accent-gold to-accent-coral" },
-  { id: "2", title: "Bedtime Stories", icon: "🌙", itemCount: 5, gradient: "from-accent-purple to-accent-blue" },
-  { id: "3", title: "Sunday School", icon: "⛪", itemCount: 12, gradient: "from-accent-blue to-accent-green" },
-  { id: "4", title: "Sing Along!", icon: "🎤", itemCount: 10, gradient: "from-accent-coral to-accent-gold" },
+  { id: "1", title: "Morning Worship", icon: "☀️", itemCount: 8, gradient: "from-accent-gold to-accent-coral", description: "Start your day with joyful praise and worship songs to brighten every morning." },
+  { id: "2", title: "Bedtime Stories", icon: "🌙", itemCount: 5, gradient: "from-accent-purple to-accent-blue", description: "Gentle Bible stories and calming prayers to help little ones drift off to sleep." },
+  { id: "3", title: "Sunday School", icon: "⛪", itemCount: 12, gradient: "from-accent-blue to-accent-green", description: "Fun lessons and stories perfect for learning about God's love on Sundays." },
+  { id: "4", title: "Sing Along!", icon: "🎤", itemCount: 10, gradient: "from-accent-coral to-accent-gold", description: "Interactive worship songs that kids can sing and dance along to." },
 ];

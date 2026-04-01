@@ -44,7 +44,11 @@ export default function AudioPlayer({ title, artist = "LightHouse Kids", gradien
 
       {/* Controls */}
       <div className="flex items-center gap-8 mt-6">
-        <button className="w-12 h-12 rounded-full hover:bg-surface-secondary flex items-center justify-center text-xl text-foreground-secondary transition-colors">
+        <button
+          data-testid="rewind-button"
+          onClick={() => player.rewind(10)}
+          className="w-12 h-12 rounded-full hover:bg-surface-secondary flex items-center justify-center text-xl text-foreground-secondary transition-colors"
+        >
           ⏮
         </button>
         <button
@@ -54,7 +58,11 @@ export default function AudioPlayer({ title, artist = "LightHouse Kids", gradien
         >
           {player.isPlaying ? "⏸" : "▶"}
         </button>
-        <button className="w-12 h-12 rounded-full hover:bg-surface-secondary flex items-center justify-center text-xl text-foreground-secondary transition-colors">
+        <button
+          data-testid="forward-button"
+          onClick={() => player.forward(10)}
+          className="w-12 h-12 rounded-full hover:bg-surface-secondary flex items-center justify-center text-xl text-foreground-secondary transition-colors"
+        >
           ⏭
         </button>
       </div>

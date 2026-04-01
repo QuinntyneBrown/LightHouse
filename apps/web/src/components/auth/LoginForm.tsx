@@ -36,7 +36,7 @@ export default function LoginForm({ onSubmit }: LoginFormProps) {
         onChange={(e) => setPassword(e.target.value)}
         required
       />
-      <Button type="submit" fullWidth size="lg">
+      <Button type="submit" fullWidth size="lg" data-testid="login-button">
         Sign In
       </Button>
       <p className="text-center text-sm text-foreground-muted">

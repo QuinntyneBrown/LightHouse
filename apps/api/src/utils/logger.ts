@@ -1,6 +1,4 @@
-import type { FastifyLoggerOptions } from "fastify";
-
-export function getLoggerConfig(env: string): FastifyLoggerOptions | boolean {
+export function getLoggerConfig(env: string): Record<string, unknown> | boolean {
   if (env === "test") {
     return false;
   }

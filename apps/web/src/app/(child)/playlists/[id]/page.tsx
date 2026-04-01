@@ -24,15 +24,23 @@ export default function PlaylistDetailPage() {
       </div>
 
       {/* Playlist cover */}
-      <div className={`mx-4 bg-gradient-to-br ${playlist.gradient} rounded-2xl p-8 flex flex-col items-center text-white`}>
+      <div data-testid="playlist-cover" className={`mx-4 bg-gradient-to-br ${playlist.gradient} rounded-2xl p-8 flex flex-col items-center text-white`}>
         <span className="text-5xl mb-3">{playlist.icon}</span>
         <h2 className="text-xl font-semibold">{playlist.title}</h2>
+        {playlist.description && (
+          <p data-testid="playlist-description" className="text-sm text-white/80 mt-2 text-center max-w-xs">{playlist.description}</p>
+        )}
       </div>
 
       {/* Items */}
-      <div className="flex flex-col gap-3 px-4">
-        {MOCK_CONTENT.map((item) => (
-          <ContentCard key={item.id} {...item} />
+      <div data-testid="playlist-items" className="flex flex-col gap-3 px-4">
+        {MOCK_CONTENT.map((item, index) => (
+          <div key={item.id} className="flex items-center gap-3">
+            <span className="text-sm font-semibold text-foreground-muted w-6 text-center">{index + 1}</span>
+            <div className="flex-1">
+              <ContentCard {...item} />
+            </div>
+          </div>
         ))}
       </div>
     </div>

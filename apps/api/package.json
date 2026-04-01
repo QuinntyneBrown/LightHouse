@@ -17,6 +17,7 @@
     "@fastify/rate-limit": "^10.2.0",
     "@fastify/jwt": "^9.0.0",
     "@fastify/cookie": "^11.0.0",
+    "@prisma/client": "^6.2.0",
     "bcryptjs": "^2.4.3",
     "minio": "^8.0.0",
     "meilisearch": "^0.46.0",
