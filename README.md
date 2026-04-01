@@ -38,6 +38,7 @@ This repository contains both the design documentation and the active implementa
 |-- docs/
 |   |-- specs/              # L1 and L2 requirements
 |   |-- detailed-designs/   # 11 domain design documents with PlantUML diagrams
+|   |-- images/              # README and generated design assets
 |   |-- solution-architecture.md
 |   |-- hosting-costs.md
 |   `-- ui-design.pen
@@ -110,7 +111,7 @@ Playwright specs under `tests/e2e/specs`:
 - browsing, home-screen, navigation, onboarding
 - parental-controls, playback, profile-management
 
-22 page objects under `tests/e2e/pages` covering the full app surface.
+24 page objects under `tests/e2e/pages` covering the full app surface, plus shared fixtures and test data helpers.
 
 ## Local Development
 
