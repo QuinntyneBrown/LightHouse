@@ -1,8 +1,12 @@
 # LightHouse
 
+![LightHouse Kids](docs/images/readme-hero.png)
+
 LightHouse Kids is a self-hostable children's media platform for churches and families. The product combines a child-friendly PWA, parent-controlled profiles, curated playback, and a content pipeline designed to stay affordable to run.
 
 This repository contains both the design documentation and the active implementation workspace. The codebase is organized as a pnpm + Turborepo monorepo with a Next.js frontend, a Fastify API, shared TypeScript packages, Prisma schema and seed data, and Playwright acceptance tests.
+
+![App Screenshots](docs/images/readme-screenshots.png)
 
 ## Stack
 
